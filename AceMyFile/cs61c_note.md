@@ -481,5 +481,90 @@ int x = *p; // wrong! p is a null pointer
 
 - By standard C99, `sizeof(char) == 1`;
 - Can take `sizeof(arg)` and `sizeof(structtype)`;
-- 
+
+**Pointer Arithmetic**
+
+- pointer + n: Adds `n*sizeof(the obj is pointed to)` to the memory address.
+- pointer - n: Similar to above.
+
+**Using Function to Change Values**
+
+Simply use pointer to do so.
+
+```c
+void addOne(int *p) {
+    *p = *p + 1;
+}
+
+int y = 3;
+addOne(&y);  // pass the address of y!
+```
+
+**Change a pointer in a function**
+
+- Use a "handler" or pointer to pointer (`**h`):
+
+```c
+void IncrementPtr(int **h) {
+    *h = *h + 1; // increase the pointer which pointed by the handler 
+}
+
+int A[3] = {50, 60, 70};
+int *q = A;	// q is pointing to "50"
+IncrementPtr(&q); // pass the address of the pointer!
+printf("*q = %d\n", *q); // now q is pointing to "60"!
+```
+
+**map**
+
+You can write general procedures that consume other functions.
+
+<img src=".\cs61c_pics\map.png" style="zoom:75%;" />
+
+## Arrays
+
+An array just a block of memory.
+
+**Declaration**: `int ar[2];`
+
+**Declaration and Initialization**: `int ar[] = {3, 4};`
+
+**Accessing Elements**: `ar[num];`
+
+**Array are (almost) identical to pointers**: An array variable is a "pointer" to the first element.
+
+- `ar[0]` is the same as `*ar`
+- `ar[2]` is the same as `*(ar+2)`
+
+**Valid Array**: Declared arrays are only allocated while the scope is valid.  
+
+**Single Source of Truth**: 
+
+Utilize a variable for declaration & increment:
+
+```c
+int ARRAY_SIZE = 10;
+int i, a[ARRAY_SIZE];
+for(i = 0; i < ARRAY_SIZE; i++) {
+    ...
+}
+```
+
+**An array doesn't know its own length!** 
+
+- So we can accidentally access off the end of an array.
+- Avoidance: We must pass the array **and its size** to a procedure which is going to traverse it.
+- Exception: since strings are always terminated with a 0, so you can keep reading until you get to 0.
+
+**Segmentation faults**: A segment kind of is a way to your access space. A segmentation fault says you are reading a wrong memory that you don't have access to.
+
+**Bus errors**: A bus error means your alignment is wrong. e.g. looking at the address of an integer isn't 0, 4, 8, C.
+
+
+
+
+
+
+
+
 
