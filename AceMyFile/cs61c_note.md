@@ -399,6 +399,19 @@ z = *p // assign value at address in p to z
 
 Local variables in C are not initialized , they may contain anything! So plz make pointers point to some addresses!
 
+we can make a pointer either:
+
+- make it point to something that already exists.
+- allocate room in memory for something new that it will point to.
+
+**Why use pointer?**
+
+- pass pointer is better than pass some big things, like huge arrays or structs.
+
+**Drawbacks**
+
+Memory Leak, Dangling reference...
+
 **Takeaways**
 
 - Pointers are used to point at any data type(`int`, `char`, a `struct`, etc.)
@@ -475,12 +488,19 @@ int x = *p; // wrong! p is a null pointer
 
 <img src=".\cs61c_pics\Pointing2DiffSizeObj.png" style="zoom:75%;" />
 
-**sizeof()**
+### **sizeof()**
 
 `sizeof(type)` returns numbers of bytes in object, including any padding needed for alignment.
 
 - By standard C99, `sizeof(char) == 1`;
 - Can take `sizeof(arg)` and `sizeof(structtype)`;
+
+```c
+intar[3];
+sizeof(ar) // 12
+```
+
+
 
 **Pointer Arithmetic**
 
@@ -560,11 +580,142 @@ for(i = 0; i < ARRAY_SIZE; i++) {
 
 **Bus errors**: A bus error means your alignment is wrong. e.g. looking at the address of an integer isn't 0, 4, 8, C.
 
+## Dynamic Memory Allocation
+
+To allocate room for something new to point to, use `malloc()` with the help of *typecast* and `sizeof()`:
+
+```c
+ptr = (int *) malloc(sizeof(int));
+```
+
+To allocate an "array":
+
+```c
+ptr = (int *) malloc(n * sizeof(int));
+```
+
+**You should remember always check if malloc() failed**:
+
+```c
+if(p == 0) {
+ ... // do sth if fail   
+}
+```
 
 
 
+Then you need to set value for it.
+
+After dynamically allocating space, we must dynamically **free** it.
+
+```c
+free(ptr);
+```
+
+**free**: 
+
+Two things you should **never** do:
+
+- `free()` the same thing twice;
+- calling `free()` on something you didn't get back from `malloc()`;
+
+**A memory leak** in C occurs when a program allocates memory dynamically and doesn't release it when it is no longer needed.
+
+<img src=".\cs61c_pics\malloc()&free().png" style="zoom:75%;" />
+
+**Choosing a block in `malloc()`**
+
+- best-fit: choose the smallest block that is big enough for the request.
+- first-fit: choose the first block we see that is big enough.
+- next-fit: like first-fit, but remember where we finished searching and resume searching from there.
+
+**realloc()**
+
+```c
+int *ip;
+ip = (int *) malloc(10 * sizeof(int));
+/* Remember, always check for ip == NULL */
+...
+ip = (int *) malloc(20 * sizeof(int));
+/* Remember, always check for ip == NULL */
+...
+free(ip); // or use realloc(ip, 0);
+```
+
+### Perils
+
+- **realloc() may change the memory block your pointer points to!**
+
+```c
+struct foo *f = malloc(sizeof(struct foo) * 10);
+...
+struct foo *g = f;
+...
+f = realloc(sizrof(struct foo) * 20); // this may result g pointing to invalid memory 
+```
+
+- **Never freeing wrong stuff**
+
+```c
+struct foo *f = malloc(sizeof(struct foo) * 10);
+...
+f++;
+...
+free(f); // this may corrupt its internal storage or erase other data
+```
+
+- **Losing the initial pointer!**
+
+```c
+int *plk = NULL;
+void genPLK() {
+    plk = malloc(2 * sizeof(int));
+    ...
+    plk++ // don't do this! Memory leak waring!
+}
+```
 
 
 
+- **Never double-free**
 
+
+
+<img src=".\cs61c_pics\MinCSummary.png" style="zoom:75%;" />
+
+## Allocation v.s. Array
+
+Using dynamic allocation can avoid program crash if it goes fail.
+
+## Heap
+
+Dynamic variable storage, data  lives until deallocated by programmer.
+
+**Note**: it is a different concept from heap in data structure.
+
+Heap is not allocated **contiguously**.
+
+Heap management:
+
+- quicker runtime of `malloc()` and `free()`
+- minimal memory overhead
+- avoid fragmentation
+
+Heap is biggest source of bugs in C code!
+
+## Stack
+
+Local variable storage, gets bigger as subroutines are called. (Recursion makes it grows big too).
+
+<img src=".\cs61c_pics\stack.png" style="zoom:65%;" />
+
+**Never** return a pointer in the stack!!!
+
+<img src=".\cs61c_pics\rtnPointerIntoStack.png" style="zoom:75%;" />
+
+## Static Storage
+
+Global variables live here for entire program run.
+
+<img src=".\cs61c_pics\Stack&Heap.png" style="zoom:75%;" />
 
