@@ -5,6 +5,7 @@
 //Returns 1 if the input is a prime number, and 0 otherwise.
 int isPrime(int n)
 {
+    if(n == 2) return 1;
     if(n%2 == 0) return 0;
     for(int i = 3; i < n; i+=2)
     {
@@ -18,11 +19,22 @@ int main(int argc, char *argv[]) {
     int onepercent = (argc == 2 ? atoi(argv[1]) : MAXVAL);
     /*You may assume that the above line is correct*/
     int i = 2;
+    int total = 0;
+    int percent = 0;
+    FILE *fp = fopen("primenumbers.txt", "w");	
     for(;i<onepercent*100;i++) //So that percent messages are easier to set up.
     {
         if(isPrime(i)) //Checks if a number is prime. As a reminder, 0 is false, and any nonzero value is true.
         {
-            fprintf(stdout, "%d", i); //Prints the number i to standard output
+            total++;
+	    fprintf(fp, "%d\n", i); //Prints the number i to standard output
         }
+        if(percent != i/onepercent)
+	{
+	    percent = i/onepercent;
+	    printf("%d%% complete\n", percent);
+	}
     }
+    fclose(fp);
+    printf("Total primes found: %d\n", total);
 }
