@@ -65,6 +65,8 @@ $ touch example.txt
 
 This will create a file named `example.txt` with nothing inside.
 
+#### Redirection
+
 If you’d like to create a file and add text in one go, you can use:
 
 ```
@@ -127,6 +129,156 @@ Some useful Vim commands:
 Note: these commands are preceded by `<escape>` because you’ll need to press the escape key on your keyboard to switch you out of your current mode. For example, if I’m inserting (typing) into a file and want to save, I’d have to hit `<escape>` to get out of insert mode, then type `:w` to save my file. If you aren’t in a mode (i.e. you’ve just opened your file) you don’t need to hit escape first, but it won’t hurt :)
 
 For more on Vim, refer to this great [Vim for CS61C guide](https://docs.google.com/document/d/1WQF6hQK8CXtlGynSAIX7Rts6q8lykarrqX-zkb9ZDyc/view).
+
+### More on Vim
+
+- set line number:
+
+````bash
+:set number 
+````
+
+unset line number:
+
+```bash
+:set nu!
+```
+
+set and unset relative line number:
+
+```bash
+:set relativenumber
+:set nornu
+```
+
+if you want to go to a specific line you can open the file using:
+
+```bash
+vim +20 <filename>
+```
+
+
+
+- 搜索：`/ + <你要找的字符> + Enter`
+- 退出搜索高亮（https://blog.csdn.net/wangjun5159/article/details/51190668）
+
+> vim搜索后，匹配的文字会高亮，再次打开文件，还是高亮状态，
+>
+> 退出高亮使用命令，:nohl
+>
+> 推测是no high light的缩写
+
+**撤销**：`u`
+
+**Delete whole line**: `dd`
+
+
+
+### C in command line
+
+#### **CGBD**
+
+You will find the [GDB reference card useful](https://inst.eecs.berkeley.edu/~cs61c/sp21/resources-pdfs/gdb5-refcard.pdf). GDB stands for “GNU De-Bugger.” 
+
+To use the debugger, compile `hello.c` with the `-g` flag:
+
+```
+$ gcc -g -o hello hello.c
+```
+
+This causes `gcc` to store information in the executable program for `gdb` to make sense of it. Now start our debugger, (c)gdb:
+
+```
+$ cgdb hello
+```
+
+##### switch mode
+
+In cgdb, you can press `ESC` to go to the code window (top) and `i` to return to the command window (bottom) — similar to vim. The bottom command window is where you’ll enter your gdb commands.
+
+##### **Quit**
+
+To quit, use `q` command.
+
+To quit GDB, you can use the `quit` command or its shortcut `q` in GDB. This will exit GDB and terminate the program being debugged. If you want to quit GDB without terminating the program, you can use the `detach` command first, which will detach GDB from the program and let it continue running.
+
+Alternatively, you can also attach GDB to a running program using the `--pid` option when launching GDB. For example, `gdb --pid=1234` will attach GDB to the program with process ID 1234. In this case, quitting GDB will not terminate the program.
+
+##### **Set Args**
+
+- Using **Redirection**:
+
+```bash
+echo "args" > filename.txt
+cgbd xxx.c
+# after cgbd is open:
+run < filename.txt
+```
+
+
+
+- You can use the `set args` command in GDB before running the program. For example, `set args arg1 arg2 arg3` will set the arguments to `arg1`, `arg2`, and `arg3`. You can also use `show args` to see the current arguments.
+- Or you can use the `--args` option when launching GDB with the program name. For example, `gdb --args executablename arg1 arg2 arg3` will start GDB with the program `executablename` and the arguments `arg1`, `arg2`, and `arg3`.
+
+##### Kill
+
+ you can also use the `kill` command to terminate the program being debugged. This will send a SIGKILL signal to the program and end its execution. You can then restart it with the `run` command or its shortcut `r`.
+
+##### **Breakpoint**
+
+- To set a breakpoint at a specific line of source code, you can use the break command with the line number as an argument:
+
+```
+break 10
+```
+
+- This will create a breakpoint with an ID number and show some information about it. You can also use the shortcut `F8` to set a breakpoint at the current line of source code.
+- To set a breakpoint at a specific function, you can use the break command with the function name as an argument:
+
+```
+break main
+```
+
+- This will create a breakpoint with an ID number and show some information about it. You can also use the shortcut `F9` to set a breakpoint at the current function.
+- To set a breakpoint at a specific address or offset, you can use the break command with an asterisk (*) followed by the address or offset as an argument. For example, if you want to set a breakpoint at address 0x4005d4, you can type:
+
+```
+break *0x4005d4
+```
+
+- This will create a breakpoint with an ID number and show some information about it.
+- To set a conditional breakpoint, you can use the break command with an if clause followed by an expression as an argument. For example, if you want to set a breakpoint at line 10 of hello.c only if x is equal to 5, you can type:
+
+```
+break 10 if x == 5
+```
+
+- This will create a breakpoint with an ID number and show some information about it. The breakpoint will only trigger if the expression evaluates to true.
+- To list all the breakpoints that you have set, you can use the info breakpoints command. This will show the ID number, type, location, condition, and status of each breakpoint. You can also use the shortcut `F2` to toggle the display of breakpoints in the source code window.
+- To delete a breakpoint, you can use the delete command with the ID number of the breakpoint as an argument. For example, if you want to delete breakpoint 1, you can type:
+
+```
+delete 1
+```
+
+- This will delete the breakpoint and show a confirmation message. You can also use the shortcut `F7` to delete all breakpoints.
+
+##### **Single step cmd**
+
+To use the single-step command in CGDB, you need to switch to GDB mode first. You can do this by pressing the `cgdbmodekey`, which is defaulted to the `ESC` key. Then you can use the same commands as in GDB to single-step through the program. The most common ones are:
+
+- `next` or `n` to execute the next line of code, <u>stepping over function calls</u>
+- `step` or `s` to execute the next line of code, <u>stepping into function calls</u>
+- `finish` or `f` to execute until the current function returns
+- `continue` or `c` to resume execution until the next breakpoint or end of program
+
+To switch back to source mode, you can press the `cgdbmodekey` again.
+
+##### **Debug**
+
+- To print the value of a variable or an expression in GDB, you can use the `print` command or its shortcut `p` followed by the variable name or the expression. For example, `print x` will print the value of the variable `x`, and `print 1+2` will print the value of the expression `1+2`.
+- To configure GDB so it displays the value of a variable after every step, you can use the `display` command followed by the variable name. For example, `display x` will display the value of the variable `x` after every step. You can also use expressions with the `display` command. To remove a display, you can use the `undisplay` command followed by the display number.
+- To show a list of all local variables and their values in the current function, you can use the `info locals` command in GDB. This will print all the local variables that are in scope and their values. Note that you need to compile your program with debugging symbols (e.g. using `-g` option with gcc) for this command to work.
 
 # Number Representation
 
@@ -441,12 +593,12 @@ Point *paddr;
 paddr = &p2;
 
 /* dot notation */
-ingt h = p1.x;
+int h = p1.x;
 p2.y = p1.y;
 
 /* arrow notation */
 int h = paddr->x; //mostly used
-int h (*paddr).x;
+int h = (*paddr).x;
 
 /* This makes values of p2's crews equal to p1 */
 p1 = p2; // unlike java, they don't point to a same address
@@ -476,6 +628,8 @@ You can also assign a null pointer to another pointer to make it point to nothin
 ```c
 p = q; // both p and q are now null pointers
 ```
+
+**Dereference**: The dereference operator is also known as an indirection operator, which is represented by (*). When indirection operator (*) is used with the pointer variable, then it is known as **dereferencing a pointer.** When we dereference a pointer, then the value of the variable pointed by this pointer will be returned.
 
 However, you should never try to **dereference or access** the value pointed by a null pointer, as it will cause undefined behavior and may crash your program. For example:
 
@@ -718,4 +872,72 @@ Local variable storage, gets bigger as subroutines are called. (Recursion makes 
 Global variables live here for entire program run.
 
 <img src=".\cs61c_pics\Stack&Heap.png" style="zoom:75%;" />
+
+## Float Pointer
+
+<img src=".\cs61c_pics\DP.png" style="zoom:75%;" />
+
+
+
+![](.\cs61c_pics\FPex&si.png)
+
+<img src=".\cs61c_pics\FP7.5.png" style="zoom:75%;" />
+
+<img src=".\cs61c_pics\FP13.png" style="zoom:75%;" />
+
+<img src=".\cs61c_pics\associative.png" style="zoom:75%;" />
+
+<img src=".\cs61c_pics\precision&accuracy.png" style="zoom:75%;" />
+
+<img src=".\cs61c_pics\round.png" style="zoom:75%;" />
+
+**妙！**
+
+```c
+void baz(int x, int y) {
+	x = x ˆ y;
+    y = x ˆ y;
+    x = x ˆ y;
+}
+```
+
+ How do you write the bitwise exclusive-nor (XNOR) operator in C?
+
+```c
+~(x ˆ y);
+// better:
+x == y;
+```
+
+Copies the string src to dst. 
+
+```c
+void copy(char* src, char* dst) {
+	while (*dst++ = *src++); 
+ }
+```
+
+(a) An array arr of k integers
+
+`arr = (int *) malloc(sizeof(int) * k); `
+
+(b) A string str containing p characters 
+
+`str = (char *) malloc(sizeof(char) * (p + 1));`
+
+Don’t forget the null terminator! 
+
+(c) An n × m matrix mat of integers initialized to zero. 
+
+`mat = (int *) calloc(n * m, sizeof(int));`
+
+Alternative solution. This might be needed if you wanted to efficiently permute the rows of the matrix. 1 
+
+```c
+mat = (int **) calloc(n, sizeof(int *)); 
+for (int i = 0; i < n; i++) 
+    mat[i] = (int *) calloc(m, sizeof(int));
+```
+
+
 
