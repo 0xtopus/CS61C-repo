@@ -1,0 +1,34 @@
+1. Which target is part of a rule that deletes all the compiled programs?
+这个问题的中文翻译是：“哪个目标是一个规则的一部分，用于删除所有已编译的程序？”
+答案是：clean。
+解释：Makefile 中的规则通常包括一个或多个目标和相关的命令。在这个 Makefile 中，第 46 行的规则定义了一个名为 "clean" 的目标，它的命令行将删除所有已编译的程序。在命令行中，使用了通配符*来匹配所有的已编译程序，以及一些其他文件，如生成的 core 文件和临时文件。因此，运行 make clean 将会删除所有已编译的程序和其他生成的文件，以便重新编译整个程序。
+
+2. Which target is part of a rule that makes all the compiled programs?
+这个问题的中文翻译是：“哪个目标是一个规则的一部分，用于编译所有的程序？”
+答案是：all。
+解释：Makefile 中有一个默认目标 all，它是在没有指定目标时执行的默认目标。在这个 Makefile 中，第 26 行的规则定义了一个名为 all 的目标，它依赖于所有的可执行文件（在第 24 行定义），一旦所有的可执行文件都被编译成功，all 目标的命令行就会被执行。因此，运行 make 或 make all 将会编译所有的程序，包括 vector-test、bit_ops 和 lfsr。
+
+3. Which compiler is currently being used?
+这个问题的中文翻译是：“当前正在使用哪个编译器？”
+答案是：gcc。
+解释：在 Makefile 中，第 2 行定义了编译器变量 CC 为 gcc。变量 CC 被用于编译 .c 文件。因此，所有的 .c 文件都将通过 gcc 编译器进行编译。
+
+4. What C standard are we currently using?
+这个问题的中文翻译是：“我们目前正在使用哪个 C 标准？”
+答案是：C99 标准。
+解释：在 Makefile 中，第 4 行定义了 CFLAGS 变量，其中包括 -std=c99 选项。这个选项告诉编译器按照 C99 标准进行编译。因此，我们目前正在使用 C99 标准。
+
+5. How would we reference a variable “FOO” in a makefile?
+这个问题的中文翻译是：“我们如何在 Makefile 中引用变量“FOO”？”
+答案是：使用 $FOO 或 $(FOO)。
+解释：在 Makefile 中，我们可以定义变量并在规则中使用它们。要在规则中引用变量 FOO，我们可以使用 $FOO 或 $(FOO) 的形式。例如，如果我们在 Makefile 中定义了变量 FOO，可以在规则中使用 $(FOO) 来引用它。
+
+6. What operating system does the term “Darwin” represent?
+这个问题的中文翻译是：“术语“Darwin”代表哪个操作系统？”
+答案是：macOS。
+解释：在 Makefile 中，第 7 行使用 uname 命令获取当前操作系统的名称，并将其存储在变量 UNAME_S 中。在第 8 行，我们检查变量 UNAME_S 是否等于 Darwin，如果是，则说明当前操作系统是 macOS。Darwin 是 macOS 的底层操作系统内核，因此在 Makefile 中，我们使用 Darwin 来代表 macOS 操作系统。
+
+7. What line creates the lfsr program from its object files? (Give its line number.)
+这个问题的中文翻译是：“哪一行从目标文件创建 lfsr 程序？（给出行号。）”
+答案是：第 42 行。
+解释：在 Makefile 中，第 42 行定义了一个规则来创建 lfsr 程序。这个规则指定了 lfsr 目标，它依赖于 lfsr.o 目标和 bit_ops.o 目标，并且在命令行中使用这些目标来创建可执行文件 lfsr。因此，运行 make lfsr 将会创建 lfsr 可执行文件。
