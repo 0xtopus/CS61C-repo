@@ -1,5 +1,16 @@
 # Basic Things about The Course
 
+## 课程资源
+
+- video：sp21：https://inst.eecs.berkeley.edu/~cs61c/sp21/
+- project：sp23：https://cs61c.org/sp23/
+- lab：
+  - lab00：基本配置以及git和vim等，23看起来比较全面
+  - lab01，lab02：
+    - 推荐先做sp21的lab01或者sp23的lab02，对debug工具比较熟悉以后再做sp21的lab02；
+    - 对C语言不熟悉的话可以选择sp23的lab01，练习更多更基础。sp21的lab02更高级；
+    - sp23的lab02和sp21的lab01内容类似，内容是教你使用工具来debug之类的东西，不过看起来sp23更全面一些：https://cs61c.org/sp23/labs/lab02/#other-useful-gdb-commands-recommended
+
 **Six Great Ideas in Computer Structure**
 
 1. Abstraction
@@ -92,8 +103,6 @@ You can provide a relative or absolute path to print out non-local files:
 $ cat ../other_folder/file.txt
 $ cat ~/home_file.txt
 $ cat /creeper/awww_man
-
-
 ```
 
 ### Vim Basics
@@ -159,6 +168,32 @@ vim +20 <filename>
 
 
 
+**撤销**：`u`
+
+**Delete whole line**: `dd` （删除后的行会在剪贴板里，按`p`可以黏贴）
+
+**去某行**: ` :数字 + Enter键`
+
+**查看当前文件名**： `:f`
+
+**多行缩进**：`:起始行数字,末行数字<` （几个“<”表示向左缩进几个）
+
+**删除单词**：在insert模式下，`Ctrl-W`的效果是**删除一个单词**。这个快捷键也可以在命令行模式和Ex模式中使用。
+
+**剪切选中的部分**：按`v`，然后选中需要的部分，按`d`剪切，按`p`黏贴。
+
+### 自动补全
+
+> Vim 有很多插件和配置可以实现自动补全变量名的功能。以下是几种实现这个功能的方法：
+>
+> 1. 使用 Vim 原生的关键字补全功能：在插入模式下，按下 `Ctrl-n` 或 `Ctrl-p`，Vim 会根据当前文本内容进行关键字补全，包括变量名、函数名等等。如果有多个补全选项，可以使用 `Ctrl-n` 或 `Ctrl-p` 来切换选择。
+> 2. 使用插件：有很多插件可以实现自动补全变量名的功能，例如 `YouCompleteMe`、`UltiSnips`、`Neocomplete` 等等。这些插件可以根据你输入的文本内容和上下文，自动补全变量名、函数名等等。这些插件需要进行配置才能使用，具体可以参考插件的文档。
+> 3. 使用外部工具：有一些外部工具可以与 Vim 集成，实现自动补全变量名的功能，例如 `ctags`、`cscope` 等等。这些工具可以生成代码的索引文件，然后在 Vim 中使用插件或者自定义命令来进行关键字补全。这些工具需要进行配置才能使用，具体可以参考工具的文档。
+
+
+
+#### Vim查找替换
+
 - 搜索：`/ + <你要找的字符> + Enter`
 - 退出搜索高亮（https://blog.csdn.net/wangjun5159/article/details/51190668）
 
@@ -168,13 +203,182 @@ vim +20 <filename>
 >
 > 推测是no high light的缩写
 
-**撤销**：`u`
+source: https://harttle.land/2016/08/08/vim-search-in-file.html
 
-**Delete whole line**: `dd`
+以及：
+
+>在 Vim 中，你可以使用 `/` 命令来查找文档中的文本，然后使用 `n` 命令在文档中跳转到下一个匹配项。对于选中的一块区域，你可以使用 `y` 命令将其复制到剪贴板中，然后将其用作搜索字符串。
+>
+>以下是具体步骤：
+>
+>1. 使用 `v` 键选中一块区域。
+>2. 按下 `y` 键将选中的内容复制到剪贴板中。
+>3. 按下 `/` 键进入查找模式。
+>4. 按下`Ctrl + R + "`粘贴剪贴板中的内容，然后按下回车键进行搜索。
+>5. 使用 `n` 命令在文档中跳转到下一个匹配项，使用`N`回到上一项。
+>
+>如果你想要搜索整个文档而不是当前屏幕，可以在搜索命令前加上 `%`，例如 `/%pasted_text%`。这将搜索整个文档而不是当前屏幕。
+>
+>另外，如果你想要查找并替换匹配项，可以使用 `:%s/search_string/replace_string/g` 命令。其中 `search_string` 是要查找的字符串，`replace_string` 是要替换的字符串，`g` 表示全局替换。
+>
+>
+>
+>- 我想查找文档里所有的 /* YOUR CODE HERE */，但是好像不太奏效.
+>
+>
+>
+>如果你想在 Vim 中查找 `/* YOUR CODE HERE */`，需要注意到这个字符串中包含了正则表达式的特殊字符 `/` 和 `*`，需要使用反斜杠 `\` 进行转义。
+>
+>你可以使用以下命令在 Vim 中查找这个字符串：
+>
+>```
+>/\/\*\s*YOUR CODE HERE\s*\*\/
+>```
+>
+>其中：
+>
+>- `\/` 匹配 `/` 字符。
+>- `\*` 匹配 `*` 字符，需要使用反斜杠转义。
+>- `\s*` 匹配任意数量的空格字符（包括空格、制表符等）。
+>- `YOUR CODE HERE` 是要查找的字符串。
+>- `\*\/` 匹配 `*/` 字符序列，需要使用反斜杠转义。
+>
+>这个命令会在文档中查找所有形如 `/* YOUR CODE HERE */` 的字符串，无论它们是否在同一行上。如果你只想查找当前行中是否存在这个字符串，可以使用 `/\* YOUR CODE HERE \*/` 命令。注意这里字符串前后的空格字符需要精确匹配。
+
+#### C语言排版
+
+您可以使用以下步骤来设置 vim 的 C 语言缩进选项，并确保所有缩进都是 4 个空格：
+
+1. 打开您要编辑的 C 语言源代码文件，并进入 vim 编辑器。
+2. 按下 `Esc` 键，以确保您处于命令模式。
+3. 输入以下命令，以设置缩进选项：
+
+```
+:set expandtab
+:set tabstop=4
+:set shiftwidth=4
+```
+
+`set expandtab` 命令将制表符转换为等效的空格，并使用空格进行缩进。
+
+`set tabstop=4` 命令将制表符宽度设置为 4 个空格。
+
+`set shiftwidth=4` 命令将缩进宽度设置为 4 个空格。
+
+1. 按下 `Esc` 键，然后输入 `:wq` 命令，以保存更改并退出 vim 编辑器。
+
+现在，您应该可以在 vim 中使用这些选项来编辑 C 语言源代码，并确保所有缩进都是 4 个空格。
+
+更多设置请见：<a href="https://blog.csdn.net/weixin_44070137/article/details/107294439">this link</a>
+
+##### 一劳永逸
+
+您可以将这些 vim 编辑器选项添加到您的 vim 配置文件中，以便每次打开 vim 编辑器时都自动遵循这些规定。
+
+1. 打开您的 vim 配置文件。如果您使用的是 Linux 或 macOS，您可以使用以下命令打开 `~/.vimrc` 文件：
+
+```
+vim ~/.vimrc
+```
+
+如果您使用的是 Windows，您可以打开 `~/_vimrc` 文件。
+
+**找不到.vimrc？**
+
+看<a href="https://stackoverflow.com/questions/10921441/where-is-my-vimrc-file">这里</a>，把vimrc复制到自己的目录下并重命名为`.vimrc`：
+
+```
+cp /etc/vim/vimrc ~/.vimrc
+```
+
+2. 在文件的末尾，添加以下行：
+
+```
+set expandtab
+set tabstop=4
+set shiftwidth=4
+```
+
+3. 保存并关闭文件。
+
+现在，每次您打开 vim 编辑器时，它都会自动遵循这些选项，确保所有缩进都是 4 个空格。
 
 
 
-### C in command line
+### Vim分屏
+
+> - 我现在正在使用vim编辑test.c文件，请教我如何切换到state.c查看里面的内容
+>
+> 
+>
+> 您可以使用vim的内置命令来切换到另一个文件。在vim的命令模式下，输入`:e state.c`，然后按下回车键即可打开state.c文件。
+>
+> 如果您想在当前vim窗口中打开state.c文件，则可以使用水平分割窗口的命令`:sp state.c`或垂直分割窗口的命令`:vsp state.c`。这将在当前vim窗口中创建一个新的分割窗口，并在其中打开state.c文件。
+>
+> 要在不同的窗口之间移动，请使用vim的窗口命令。例如，要在水平分割的窗口之间移动，请使用`Ctrl-w j`和`Ctrl-w k`，其中`j`和`k`是向下和向上移动的方向键。要在垂直分割的窗口之间移动，请使用`Ctrl-w h`和`Ctrl-w l`，其中`h`和`l`是向左和向右移动的方向键。
+>
+> 注意，为了使用这些命令，您需要先进入vim的命令模式，通过按下`Esc`键来退出插入模式或其他模式。
+>
+> 
+>
+> - 我执行了:e src/state.c，但是E37: No write since last change (add ! to override),怎么回事？
+>
+> 
+>
+> 这个错误消息通常是因为您在当前文件中进行了更改，但没有保存更改，因此Vim不允许您切换到另一个文件，以防止因此丢失更改。
+>
+> 为了解决这个问题，您可以执行以下两个操作之一：
+>
+> 1. 保存当前文件并切换到另一个文件：在命令模式下，输入`:w`保存当前文件，然后再次输入`:e src/state.c`以切换到另一个文件。
+> 2. 放弃对当前文件的更改并切换到另一个文件：在命令模式下，输入`:e! src/state.c`。这将放弃对当前文件的更改并强制打开另一个文件。
+>
+> 请注意，在第二种情况下，您将失去对当前文件的任何更改，因此在执行此操作之前，请确保您不再需要对当前文件进行任何更改。
+>
+> 
+>
+> - 我使用了`:vsp state.c`，但是现在state.c在左边，test.c在右边，我该怎么交换它们的位置？
+>
+> 
+>
+> 要交换水平分割窗口中两个窗口的位置，您可以使用vim的窗口命令。在命令模式下，将光标移到要交换的窗口上，然后按下`Ctrl-w x`。这将交换当前窗口和相邻窗口的位置，从而改变它们在水平分割窗口中的顺序。
+>
+> 在您的情况下，您可以按下`Ctrl-w x`来交换左右两个窗口的位置，将state.c窗口移动到右边。
+>
+> 请注意，在使用水平分割窗口时，`Ctrl-w`是一个前缀键，用于执行窗口命令。在这种情况下，您需要按下`Ctrl-w`并保持按下状态，然后按下`x`来交换窗口的位置。
+>
+> 
+>
+> - 执行命令`:vsp state.c`之后怎么更改窗口之间的大小比例？
+>
+> 
+>
+> 在命令模式下，您可以使用`Ctrl-w`命令和数字键来指定窗口大小的增量。例如，如果您想将当前窗口向右增加5个字符的宽度，可以按下`Ctrl-w 5 >`。如果您想缩小窗口，可以使用`Ctrl-w`命令和`-`键，例如`Ctrl-w 5 -`会将当前窗口减小5个字符的宽度。
+>
+> 您还可以使用`Ctrl-w`命令和箭头键来调整窗口大小。例如，要将当前窗口向右移动3个字符，可以按下`Ctrl-w 3 l`。类似地，`Ctrl-w 3 h`将向左移动窗口，`Ctrl-w 3 j`将向下移动窗口，`Ctrl-w 3 k`将向上移动窗口。
+>
+> 如果您想要更自由地调整窗口大小，可以使用鼠标拖动窗口边缘的方法。在命令模式下，将光标移到窗口边缘上，然后按住左键并拖动即可。
+>
+> 
+>
+> - 能不能输入一个命令让它们的窗口各占50%？
+>
+> 
+>
+> 在命令模式下，将光标移到要调整大小的窗口上（在您的情况下，应该是test.c窗口或state.c窗口中的任意一个），然后按下`Ctrl-w`键并按住不放，接着按下`=`键两次，即`Ctrl-w = =`。这将使两个窗口各占50%的宽度，从而实现水平分割窗口的均分。
+>
+> 请注意，在使用水平分割窗口时，`Ctrl-w`是一个前缀键，用于执行窗口命令。在这种情况下，您需要按下`Ctrl-w`并保持按下状态，然后按下`=`键两次来实现窗口大小的均分。
+>
+> 希望这可以帮助您让两个窗口各占50%的宽度。
+
+
+
+### 打造Vim C IDE
+
+check <a href="https://github.com/WilsonQ1n/VIM_C_IDE">this link</a>
+
+
+
+### C debugger in command line
 
 #### **CGBD**
 
@@ -255,10 +459,17 @@ break 10 if x == 5
 
 - This will create a breakpoint with an ID number and show some information about it. The breakpoint will only trigger if the expression evaluates to true.
 - To list all the breakpoints that you have set, you can use the info breakpoints command. This will show the ID number, type, location, condition, and status of each breakpoint. You can also use the shortcut `F2` to toggle the display of breakpoints in the source code window.
-- To delete a breakpoint, you can use the delete command with the ID number of the breakpoint as an argument. For example, if you want to delete breakpoint 1, you can type:
+- 查看所有断点：
 
 ```
-delete 1
+info breakpoints
+```
+
+- To delete a breakpoint, you can use the delete command with the ID number of the breakpoint as an argument. For example, if you want to delete breakpoint 1, you can type:
+
+```bash
+delete 1  #数字代表第"n"个断点（用info breakpoints查看）
+delete #删除所有断点
 ```
 
 - This will delete the breakpoint and show a confirmation message. You can also use the shortcut `F7` to delete all breakpoints.
@@ -279,6 +490,141 @@ To switch back to source mode, you can press the `cgdbmodekey` again.
 - To print the value of a variable or an expression in GDB, you can use the `print` command or its shortcut `p` followed by the variable name or the expression. For example, `print x` will print the value of the variable `x`, and `print 1+2` will print the value of the expression `1+2`.
 - To configure GDB so it displays the value of a variable after every step, you can use the `display` command followed by the variable name. For example, `display x` will display the value of the variable `x` after every step. You can also use expressions with the `display` command. To remove a display, you can use the `undisplay` command followed by the display number.
 - To show a list of all local variables and their values in the current function, you can use the `info locals` command in GDB. This will print all the local variables that are in scope and their values. Note that you need to compile your program with debugging symbols (e.g. using `-g` option with gcc) for this command to work.
+- **回溯错误发生的代码处**：If you see "Segmentation fault (core dumped)", this means that your program crashed. One way to start debugging is by starting CGDB, `run`ning the program with no breakpoints, and then typing `backtrace` or `bt` to see what line of code the program crashed at.
+
+##### 设置条件断点
+
+- 要设置条件断点，您可以使用以下语法：
+
+```c
+break <location> if <condition>
+```
+
+其中，`<location>`表示要设置断点的位置，可以是函数名、行号、地址等；`<condition>`表示要满足的条件，可以是任何有效的C表达式。
+
+例如，如果您想在main函数的第10行设置一个断点，只在变量x等于5时停止程序，您可以这样写：
+
+```c
+break main:10 if x == 5
+```
+
+
+
+- 如果您已经设置了一个断点，想给它添加一个条件，您可以使用以下语法：
+
+```c
+condition <breakpoint number> <condition>
+```
+
+其中，`<breakpoint number>`表示要添加条件的断点的编号；`<condition>`表示要满足的条件，可以是任何有效的C表达式。
+
+例如，如果您想给第2个断点添加一个条件，只在字符串x等于"hello"时停止程序，您可以这样写：
+
+```c
+condition 2 $_streq(x, "hello")
+```
+
+#### 进程卡死
+
+当你按下 `Ctrl-Z` 键后，cgdb 进程就会被挂起，并且返回一个终端提示符。此时，你可以使用 `fg` 命令将 cgdb 进程重新激活并恢复到前台。具体步骤如下：
+
+1. 按下 `Ctrl-Z` 键。
+2. 输入 `bg` 命令将 cgdb 进程放入后台。
+3. 输入 `jobs` 命令查看后台任务的状态和编号。
+4. 输入 `fg` 命令将 cgdb 进程重新激活并恢复到前台。
+
+
+
+如果你想彻底结束 cgdb 进程，可以按下 `Ctrl-C` 键或者使用 `kill` 命令来结束进程。
+
+你可以使用以下方法彻底结束 cgdb 进程：
+
+1. 在 cgdb 的命令窗口中按下 `Ctrl-C` 键，该命令可以终止正在运行的程序并退出 cgdb。
+
+2. 在终端中使用 `kill` 命令结束 cgdb 进程。首先，你需要使用 `ps` 命令查找 cgdb 进程的 PID（进程ID），然后使用 `kill` 命令结束该进程。具体步骤如下：
+
+   a. 打开终端并输入 `ps aux | grep cgdb` 命令查找 cgdb 进程的 PID。
+
+   b. 在输出结果中找到 cgdb 进程的 PID，并记录下来。
+
+   c. 使用 `kill <PID>` 命令结束 cgdb 进程，其中 `<PID>` 为进程的 PID。
+
+   注意：如果 cgdb 进程无法正常结束，你可以使用 `kill -9 <PID>` 命令来强制结束进程。
+
+3. 如果以上方法都无法结束 cgdb 进程，你可以尝试重启操作系统来结束所有进程。
+
+## Other Useful GDB Commands (Recommended)
+
+### Command: `info locals`
+
+Prints the value of all of the local variables in the current stack frame
+
+### Command: `command`
+
+Executes a list of commands every time a break point is reached. For example:
+
+Set a breakpoint:
+
+```txt
+b 73
+```
+
+Type `commands` followed by the breakpoint number:
+
+```txt
+commands 1
+```
+
+Type the list of commands that you want to execute separated by a new line. After your list of commands, type `end` and hit Enter.
+
+```txt
+p var1
+p var2
+end
+```
+
+## Valgrind
+
+检查内存泄漏。
+
+https://valgrind.org/docs/manual/mc-manual.html
+
+## Makefile
+
+以`lab02`为例：
+
+1. Which target is part of a rule that deletes all the compiled programs?
+   这个问题的中文翻译是：“哪个目标是一个规则的一部分，用于删除所有已编译的程序？”
+   答案是：clean。
+   解释：Makefile 中的规则通常包括一个或多个目标和相关的命令。在这个 Makefile 中，第 46 行的规则定义了一个名为 "clean" 的目标，它的命令行将删除所有已编译的程序。在命令行中，使用了通配符`*`来匹配所有的已编译程序，以及一些其他文件，如生成的 core 文件和临时文件。因此，运行 `make clean` 将会删除所有已编译的程序和其他生成的文件，以便重新编译整个程序。
+2. Which target is part of a rule that makes all the compiled programs?
+   这个问题的中文翻译是：“哪个目标是一个规则的一部分，用于编译所有的程序？”
+   答案是：all。
+   解释：Makefile 中有一个默认目标 `all`，它是在没有指定目标时执行的默认目标。在这个 Makefile 中，第 26 行的规则定义了一个名为 `all` 的目标，它依赖于所有的可执行文件（在第 24 行定义），一旦所有的可执行文件都被编译成功，`all` 目标的命令行就会被执行。因此，运行 `make` 或 `make all` 将会编译所有的程序，包括 `vector-test`、`bit_ops` 和 `lfsr`。
+3. Which compiler is currently being used?
+   这个问题的中文翻译是：“当前正在使用哪个编译器？”
+   答案是：gcc。
+   解释：在 Makefile 中，第 2 行定义了编译器变量 `CC` 为 `gcc`。变量 `CC` 被用于编译 `.c` 文件。因此，所有的 `.c` 文件都将通过 `gcc` 编译器进行编译。
+4. What C standard are we currently using?
+   这个问题的中文翻译是：“我们目前正在使用哪个 C 标准？”
+   答案是：C99 标准。
+   解释：在 Makefile 中，第 4 行定义了 CFLAGS 变量，其中包括 `-std=c99` 选项。这个选项告诉编译器按照 C99 标准进行编译。因此，我们目前正在使用 C99 标准。
+5. How would we reference a variable “FOO” in a makefile?
+   这个问题的中文翻译是：“我们如何在 Makefile 中引用变量“FOO”？”
+   答案是：使用 `$FOO` 或 `$(FOO)`。
+   解释：在 Makefile 中，我们可以定义变量并在规则中使用它们。要在规则中引用变量 FOO，我们可以使用 `$FOO` 或 `$(FOO)` 的形式。例如，如果我们在 Makefile 中定义了变量 `FOO`，可以在规则中使用 `$(FOO)` 来引用它。
+6. What operating system does the term “Darwin” represent?
+   这个问题的中文翻译是：“术语“Darwin”代表哪个操作系统？”
+   答案是：macOS。
+   解释：在 Makefile 中，第 7 行使用 `uname` 命令获取当前操作系统的名称，并将其存储在变量 `UNAME_S` 中。在第 8 行，我们检查变量 `UNAME_S` 是否等于 `Darwin`，如果是，则说明当前操作系统是 macOS。Darwin 是 macOS 的底层操作系统内核，因此在 Makefile 中，我们使用 `Darwin` 来代表 macOS 操作系统。
+7. What line creates the lfsr program from its object files? (Give its line number.)
+   这个问题的中文翻译是：“哪一行从目标文件创建 lfsr 程序？（给出行号。）”
+   答案是：第 42 行。
+   解释：在 Makefile 中，第 42 行定义了一个规则来创建 `lfsr` 程序。这个规则指定了 `lfsr` 目标，它依赖于 `lfsr.o` 目标和 `bit_ops.o` 目标，并且在命令行中使用这些目标来创建可执行文件 `lfsr`。因此，运行 `make lfsr` 将会创建 `lfsr` 可执行文件。
+
+- Makefile清理之前生成的文件：`make clean`
+
+ 
 
 # Number Representation
 
@@ -480,6 +826,50 @@ For example, on a 16-bit machine, int might be 16 bits and long might be 32 bits
 
 If you want to use types that have fixed sizes regardless of the platform or compiler, you can use the types defined in stdint.h header file, such as int32_t, int64_t, etc. These types are guaranteed to have the specified number of bits and no padding.
 
+## Bit Operations
+
+https://www.runoob.com/cprogramming/c-operators.html
+
+**异或**：
+
+- `0 ^ x`：x不变
+
+- `1 ^ x` :  x取反
+
+应用：
+
+```c
+// Flip the nth bit of the value of x.
+// Assume 0 <= n <= 31
+void flip_bit(unsigned * x,
+              unsigned n) {
+    // YOUR CODE HERE
+    *x ^= (1u << n);
+}
+```
+
+**置位**：
+
+- 先用掩码处理对应的位，然后再位与 / 位或：
+
+```c
+// Set the nth bit of the value of x to v.
+// Assume 0 <= n <= 31, and v is 0 or 1
+void set_bit(unsigned * x,
+             unsigned n,
+             unsigned v) {
+    // 法一：先置1，再位与
+    unsigned mask = 1u << n;
+    *x = (*x | mask) & (v << n);
+    
+    // 法二：先置0，再位或
+    unsigned mask2 = ~(1u << n);
+    *x = (*x & mask2) | (v << n);
+}
+```
+
+
+
 
 
 ## Consts and Enums
@@ -523,11 +913,87 @@ song1.length_in_seconds = 213;	// using dot notation
 song1.year_recorded = 1998;
 ```
 
+**Optional: `typedef`s**
+
+Sometimes, you may see a `typedef` when declaring a struct:
+
+```c
+typedef struct {
+    int id;
+} Student;
+```
+
+In these cases, you may use `Student` as the type instead of `struct Student`. We won't go into detail here, but feel free to check out [this link](https://stackoverflow.com/questions/1675351/typedef-struct-vs-struct-definitions) if you're interested.
+
 ## Undefined Behavior
 
 A lot of C has "Undefined Behavior":
 
 <img src=".\cs61c_pics\UnpredictbleBehavior.png" style="zoom:75%;" />
+
+## String
+
+**String literal** ：C语言的string literal是一种用双引号括起来的字符序列，例如"Hello"。它表示一个字符串的常量值，也就是说，它在程序中不能被修改。string literal通常存储在只读的内存区域，如果试图改变它的内容，可能会导致错误或异常。string literal可以用来初始化字符数组或指向字符的指针，例如：
+
+```c
+char arr[] = "Hello"; // 初始化一个字符数组`
+`char *ptr = "World"; // 初始化一个指向字符的指针
+```
+
+string literal还可以用来作为printf()等函数的参数，例如：
+
+```c
+printf("Hello World\n"); // 打印一个string literal
+```
+
+
+
+
+
+> - 如果我初始化了一个字符指针：char *ptr = "World"; // 初始化一个指向字符的指针，我可以这样改变它的值吗？ ptr = "hello";
+>
+> 
+>
+> 是的，你可以这样改变指针的值。这样做的意思是让指针ptr指向一个新的string literal，即"hello"。这不会改变原来的string literal，即"World"，它仍然存在于内存中，只是没有指针指向它了。你也可以用其他的指针变量来指向不同的string literal，例如：
+>
+> ```
+> char *ptr1 = "World"; // 初始化一个指向字符的指针`
+> `char *ptr2 = "hello"; // 初始化另一个指向字符的指针`
+> `ptr1 = ptr2; // 让ptr1指向ptr2所指向的string literal
+> ```
+>
+> 这样做之后，ptr1和ptr2都指向"hello"，而"World"没有任何指针指向它了。
+>
+> 
+>
+> - 那`ptr = "hello";` 和`*ptr = "hello";` 有什么区别？
+>
+> 
+>
+> ptr = "hello";是把ptr指向"hello"这个string literal，而 \*ptr = "hello";是试图把"hello"这个string literal赋值给\*ptr所指向的位置。但是，\*ptr所指向的位置是一个只读的内存区域，不能被修改，所以*ptr = "hello";会导致错误或异常。你不能用赋值语句来改变string literal的内容，只能改变指针的指向。
+>
+> see <a href="#immutable_string">more</a>
+
+## Segfault
+
+A segfault occurs when you try to access a piece of memory that "does not belong to you." There are several things that can cause a segfault including
+
+1. Accessing an array out of bounds. Note that accessing an array out of bounds will not always lead to a segfault. The index at which a segfault will occur is somewhat unpredictable.
+2. Derefrencing a null pointer.
+3. Accessing a pointer that has been `free`'d (`free` is not in the scope of this lab).
+4. Attempting to write to read-only memory. For example, strings created with the following syntax are read only. This means that you cannot alter the value of the string after you have created it. In other words,**<span id ="immutable_string"> it is immutable</span>**.
+
+```c
+char *my_str = "Hello";
+```
+
+However, a string created using the following syntax is mutable.
+
+```c
+char my_str[] = "hello";
+```
+
+Why is the first string immutable while the second string is mutable? The first string is stored in the data portion of memory which is read-only while the second string is stored on the stack.
 
 
 
@@ -545,6 +1011,8 @@ int *p; // variable p is aaddress of an int
 p = &y; // assign address of y to p
 
 z = *p // assign value at address in p to z
+    
+int *ptr = &x;
 ```
 
 **Pointer Dangers**
@@ -656,6 +1124,76 @@ sizeof(ar) // 12
 
 
 
+### Double pointer
+
+> - 请告诉我C语言什么时候使用double pointer比使用single pointer更好？
+>
+> C语言中使用double pointer比使用single pointer更好的情况有以下几种：
+>
+> 1. 如果你想要在一个函数中修改一个指针变量的值，你需要传递一个指向指针的指针，也就是double pointer。例如，如果你想要在一个函数中为一个指针变量分配内存，你需要传递一个double pointer，否则你只能修改函数内部的指针副本，而不会影响函数外部的指针变量。例如：
+>
+> ```c
+> void allocate(int **ptr) { // 接收一个double pointer`
+> 	*ptr = malloc(sizeof(int)); // 修改指向的指针的值`
+> }
+> 
+> int main() {
+> 	int *p = NULL; // 定义一个single pointer`
+> 	allocate(&p); // 传递一个double pointer`
+> 	// 现在p指向了一块分配的内存`
+> }
+> ```
+>
+> 2. 如果你想要创建一个二维数组或者一个指针数组，你需要使用double pointer。例如，如果你想要创建一个3x4的二维数组，你可以这样做：
+>
+> ```c
+> int **arr = malloc(3 * sizeof(int *)); // 分配三个指针的空间`
+> for (int i = 0; i < 3; i++) {
+> 	arr[i] = malloc(4 * sizeof(int)); // 分配四个整数的空间`
+> }
+> // 现在arr是一个double pointer，可以用arr[i][j]来访问元素
+> ```
+>
+> 3. 如果你想要实现一些复杂的数据结构，如链表，树，图等，你可能需要使用double pointer来操作节点之间的连接。例如，如果你想要删除一个链表中的某个节点，你可以这样做：
+>
+> ```c
+> void delete(struct node **head, int value) { // 接收一个double pointer
+> 	struct node *current = *head; // 获取头节点
+> 	struct node *prev = NULL; // 获取前驱节点
+>     
+> 	while (current != NULL && current->data != value) { // 遍历链表
+> 		prev = current; // 更新前驱节点
+> 		current = current->next; // 更新当前节点
+>  	}
+>     
+> 	if (current != NULL) { // 找到了要删除的节点
+> 		if (prev == NULL) { // 要删除的节点是头节点
+> 			*head = current->next; // 修改头节点的值
+> 		} else { // 要删除的节点不是头节点
+> 			prev->next = current->next; // 修改前驱节点的next指针
+> 		}
+>         
+> 		free(current); // 释放当前节点的内存
+>     }
+> }
+> ```
+>
+> 
+>
+> - 我想要知道为什么使用double pointer比使用single pointer更好的这些情况的原因，请通俗易懂一点
+>
+> 
+>
+> 好的，我会尽量用简单的语言来解释给你。你可以把指针想象成一个箭头，它指向某个内存地址，也就是某个变量的位置。如果你想要改变指针的指向，你就需要改变箭头的方向。但是，如果你把指针作为一个参数传递给一个函数，函数只能拿到一个箭头的副本，也就是一个新的箭头，它和原来的箭头指向同一个位置。如果你在函数中改变这个新箭头的方向，它不会影响原来的箭头，因为它们是两个不同的箭头。所以，如果你想要在函数中改变指针的指向，你需要传递一个指向指针的指针，也就是一个double pointer。这样，函数就能拿到一个指向箭头的箭头，也就是一个新的double pointer，它和原来的double pointer指向同一个single pointer。如果你在函数中改变这个新double pointer所指向的single pointer的方向，它就会影响原来的single pointer，因为它们是同一个箭头。
+>
+> 同理，如果你想要创建一个二维数组或者一个指针数组，你需要使用double pointer。因为二维数组或者指针数组其实就是一个数组，它的每个元素都是一个single pointer。如果你想要访问二维数组或者指针数组中的某个元素，你需要两个索引，一个表示行号，一个表示列号。这两个索引其实就是两个single pointer，第一个single pointer用来找到对应行的single pointer，第二个single pointer用来找到对应列的值。所以，你需要一个double pointer来存储这些single pointer。
+>
+> 最后，如果你想要实现一些复杂的数据结构，如链表，树，图等，你可能需要使用double pointer来操作节点之间的连接。因为这些数据结构都是由一些节点组成的，每个节点都有一些数据和一些指向其他节点的single pointer。如果你想要修改节点之间的连接关系，比如插入或删除某个节点，你需要改变一些single pointer的方向。但是，如果你只有单层指针，你只能访问到当前节点和它所指向的下一个节点。如果你想要访问到当前节点的前驱节点或者其他相关节点，你就需要有一个double pointer来存储这些single pointer。
+>
+> 我希望这样能让你理解为什么使用double pointer比使用single pointer更好的这些情况。如果你还有其他问题，请随时提出。
+
+
+
 **Pointer Arithmetic**
 
 - pointer + n: Adds `n*sizeof(the obj is pointed to)` to the memory address.
@@ -734,6 +1272,18 @@ for(i = 0; i < ARRAY_SIZE; i++) {
 
 **Bus errors**: A bus error means your alignment is wrong. e.g. looking at the address of an integer isn't 0, 4, 8, C.
 
+
+
+> In C, you can create an array using either the `malloc` function or the array declaration syntax `[]`. However, the choice between the two depends on your specific use case and requirements.
+>
+> Here are some factors to consider:
+>
+> 1. Size: If you need to create an array of a fixed size, you can use the array declaration syntax, such as `int a[10];`, where `a` is an array of 10 integers. This is useful when you know the size of the array at compile time. If you need to create an array of a variable size, you can use the `malloc` function to allocate the memory at runtime, based on the size you need.
+> 2. Memory management: When you use the array declaration syntax, the memory for the array is allocated on the stack, which means it is automatically deallocated when the function that contains the array exits. On the other hand, when you use `malloc`, the memory is allocated on the heap, and you need to explicitly free the memory using the `free` function when you are done with it. This makes `malloc` more flexible, but also requires more careful memory management.
+> 3. Pointer arithmetic: When you use the array declaration syntax, you can use pointer arithmetic to access and manipulate the elements of the array. For example, `a[3]` is equivalent to `*(a+3)`. When you use `malloc`, ~~you need to use pointer arithmetic to access the elements of the array, which can be more complex~~.(这个错了，两种方法的pointer arithmetic syntax都一样)
+>
+> In summary, if you know the size of the array at compile time and don't need to do complex pointer arithmetic, you can use the array declaration syntax. If you need to create an array of a variable size at runtime, or need more flexible memory management, you can use `malloc`.
+
 ## Dynamic Memory Allocation
 
 To allocate room for something new to point to, use `malloc()` with the help of *typecast* and `sizeof()`:
@@ -751,6 +1301,8 @@ ptr = (int *) malloc(n * sizeof(int));
 **You should remember always check if malloc() failed**:
 
 ```c
+ptr = (int *) malloc(n *sizeof(int));
+// check after malloc!
 if(p == 0) {
  ... // do sth if fail   
 }
@@ -941,3 +1493,23 @@ for (int i = 0; i < n; i++)
 
 
 
+## What is stream in C?
+
+> Okay, let me try to explain it in a simpler way. A stream is like a pipe that connects your program to a source or destination of data. For example, when you type something on your keyboard, the data goes through a pipe called stdin (standard input) and reaches your program. When you want to print something on your screen, the data goes through another pipe called stdout (standard output) and reaches your monitor. There are other pipes that connect your program to files, networks, devices, etc. These pipes are called streams in C. You can use different functions to send or receive data through these streams. For example, printf() is a function that sends data to stdout, and scanf() is a function that receives data from stdin.
+
+
+
+## Read Files
+
+**Steps To Read A File:**
+
+- Open a file using the function fopen() and store the reference of the file in a FILE pointer.
+- Read contents of the file using any of these functions fgetc(), fgets(), fscanf(), or fread().
+- File close the file using the function fclose().
+
+[C programming language ](https://www.geeksforgeeks.org/c-programming-language/)supports four pre-defined functions to read contents from a file, defined in [stdio.h header file](https://www.geeksforgeeks.org/whats-difference-between-and/):
+
+1. [**fgetc()**](https://www.geeksforgeeks.org/fgetc-fputc-c/)**–** This function is used to read a single character from the file.
+2. [**fgets()**](https://www.geeksforgeeks.org/fgets-gets-c-language/)**–** This function is used to read strings from files.
+3. [**fscanf()**](https://www.geeksforgeeks.org/scanf-and-fscanf-in-c-simple-yet-poweful/)**–** This function is used to read formatted input from a file.
+4. [**fread()**](https://www.geeksforgeeks.org/fread-function-in-c/)**–** This function is used to read the block of raw bytes from files. This is used to read binary files.

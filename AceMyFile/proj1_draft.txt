@@ -1,0 +1,102 @@
+Sp23 proj 1
+
+The game_state_t struct
+A snake game is stored in memory in a game_state_t struct. The struct contains the following fields:
+
+unsigned int num_rows: The number of rows in the game board.
+
+char** board: The game board in memory. Each element of the board array is a char* pointer to a character array containing a row of the map.
+
+unsigned int num_snakes: The number of snakes on the board.
+
+snake_t* snakes: An array of snake_t structs.
+
+
+The snake struct
+
+Each snake struct contains the following fields:
+
+unsigned int tail_row: The row of the snake's tail.
+unsigned int tail_col: The column of the snake's tail.
+unsigned int head_row: The row of the snake's head.
+unsigned int head_col: The column of the snake's head.
+bool live: true if the snake is alive, and false if the snake is dead.
+
+Please don't modify the provided struct definitions. You should only need to modify state.c snake.c, and custom_tests.c in this project.
+
+
+
+///////////////////////////////**************/让AI帮你检查代码/**********//////////////////////////////////////
+
+请告诉我下列代码的作用： 29 default_state->board = malloc(sizeof(char *) * 18);
+30 for(int i = 0; i < 18; i++) {
+31 *(default_state->board + i) = malloc(sizeof(char) * 20);
+32 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+这段代码的作用是为default_state->board分配一个18行20列的二维字符数组的内存空间。具体来说：
+
+第29行，为default_state->board分配一个18个元素的指针数组的内存空间，每个元素都是一个char *类型的指针，用来指向一行字符数组。
+第30行，用一个for循环遍历这个指针数组，从0到17共18次。
+第31行，为每个指针数组的元素分配一个20个元素的字符数组的内存空间，每个元素都是一个char类型的字符，用来存储一行字符数组的内容。这里使用了*(default_state->board + i)来访问指针数组的第i个元素，也就是第i行字符数组的指针。
+第32行，结束for循环。
+这样，default_state->board就指向了一个18x20的二维字符数组，可以用default_state->board[i][j]来访问其中的元素。
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+请问我这样写可以吗？我需要给每个数组最后加上'\0'吗？ 38 /* Init the board */
+39 for (int i = 0; i < 20; i++) {
+40 default_state->board[0][i] = '#';
+41 default_state->board[17][i] = '#';
+42 }
+43 for (int i = 1; i < 17; i++) {
+44 default_state->board[i][0] = '#';
+45 default_state->board[i][19] = '#';
+46 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+这样写是可以的，你可以用这段代码来初始化二维数组的边界为'#'。但是，如果你想要把每行字符数组当作一个字符串来处理，你需要给每个数组最后加上'\0'，也就是空字符，来表示字符串的结束。否则，你可能会遇到一些问题，比如打印或复制字符串时会出现乱码或越界。所以，我建议你在第31行的代码中，把20改成21，多分配一个字符的空间，然后在第47行的代码中，加上一句default_state->board[i][20] = '\0';来给每行字符数组添加空字符。
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+如果我运行这段程序，并打印这个数组，能给出打印出来的图案吗？
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+如果你运行这段程序，并打印这个数组，你会得到类似下面的图案：
+
+#####################
+#                   #
+#                   #
+#                   #
+#                   #
+#                   #
+#                   #
+#                   #
+#                   #
+#                   #
+#                   #
+#                   #
+#                   #
+#                   #
+#                   #
+#                   #
+#####################
+这是因为你把二维数组的第0行和第17行的所有元素都设为了'#'，把第1行到第16行的第0列和第19列的元素都设为了'#'，把其他位置的元素都留空了。如果你想要在这个图案中添加一些其他的符号，比如'*'或'@'，你可以用类似的方法来修改二维数组中对应位置的元素。
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+你觉得这段代码有没有什么可以改进的地方？请告诉我
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+这段代码已经很不错了，但是我觉得还有一些可以改进的地方：
+
+你可以用一些常量或宏来代替一些魔法数字，比如18，20，21等，这样可以提高代码的可读性和可维护性。比如，你可以定义一个宏#define ROWS 18和一个宏#define COLS 21，然后用它们来替换代码中的数字。
+你可以用一些注释来说明一些代码的功能或逻辑，比如你可以在第29行的代码前加上一句// Allocate memory for the board，然后在第39行的代码前加上一句// Initialize the board boundary为'#'，这样可以让其他人更容易理解你的代码。
+你可以用一些函数来封装一些重复或复杂的操作，比如你可以定义一个函数void allocate_board(char ***board)来分配二维数组的内存空间，然后在第29行的代码前调用这个函数。同样，你也可以定义一个函数void init_board(char **board)来初始化二维数组的内容，然后在第39行的代码前调用这个函数。这样可以让你的代码更简洁和模块化。
+我希望这些建议能对你有所帮助。如果你还有其他问题，请随时提出。
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
