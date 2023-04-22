@@ -26,6 +26,10 @@ Please don't modify the provided struct definitions. You should only need to mod
 
 
 
+1487
+
+1568
+
 ///////////////////////////////**************/让AI帮你检查代码/**********//////////////////////////////////////
 
 请告诉我下列代码的作用： 29 default_state->board = malloc(sizeof(char *) * 18);

@@ -1513,3 +1513,174 @@ for (int i = 0; i < n; i++)
 2. [**fgets()**](https://www.geeksforgeeks.org/fgets-gets-c-language/)**–** This function is used to read strings from files.
 3. [**fscanf()**](https://www.geeksforgeeks.org/scanf-and-fscanf-in-c-simple-yet-poweful/)**–** This function is used to read formatted input from a file.
 4. [**fread()**](https://www.geeksforgeeks.org/fread-function-in-c/)**–** This function is used to read the block of raw bytes from files. This is used to read binary files.
+
+# RISC-V Assembly
+
+> "... the key difference between mediocre and excellent programmers is whether they know assembly language. "
+>
+> ​						**-- slashdot.org comment, 2004-02-05**
+
+## Variables
+
+**assembly operands** are registers.
+
+**assembly language has no variable!**
+
+## RISC-V registers
+
+RISC-V has **32 registers**, numbering from 0 ~ 31.  
+
+You can refer them by number **x0** ~ **x31**. Each register can be referred by number or name.
+
+In RV32 variant , each RISC-V register is 32 bits wide (a word wide). 
+
+**x0** is special, always holds value 0;
+
+## Comments
+
+You can use `#` (hash, pound, sharp, octothorpe...) as `//` in C.
+
+## Instructions
+
+In assembly language, each statement is called an **instruction**, and executes exactly one of a short list of simple command.
+
+Each line of assembly contains **at most** 1 instruction.
+
+## Add and Sub
+
+```assembly
+add x1, x2, x3 
+# add: operation by name 
+# x1: destination
+# x2: source 1
+# x3: source 2
+# equal to x1 = x2 + x3
+
+sub x1, x2, x3
+# equal to x1 = x2 - x3
+```
+
+## Add Immediates
+
+- Numerical constants in assembly is called **Immediates**
+
+- There is only add immediates in RISC-V
+
+```assembly
+addi x3, x4, 20
+# equal to x3 = x4 + 20
+
+# if you one to sub a immediate:
+addi x3, x4, -20
+```
+
+- One particular immediate, the number zero:
+
+```assembly
+add x3, x4, x0
+# equal to x3 = x4
+
+# x0 can be changed IN NO CIRCUMSTANCE!
+add x0, x1, x2 # nothing will happen!
+```
+
+- Why `addi` exists:
+
+<img src=".\cs61c_pics\whyAddiExist.png" style="zoom:67%;" />
+
+## Data Transfer
+
+**Processor centric**:  Store to Memory or Load from Memory. All the main action happens inside the processor, and the memory is just out there.
+
+**Processor** has data path with the rigisters and ALU inside.
+
+**Memory** stores our program and the data that we work on. It can be viewed as an 1D array starting at 0 with address acting like its index.
+
+**How this work?**
+
+To access a word in memory, processor must: 
+
+- Supply an address calculated by processor; The address is typically specified as **an offset to a base pointer**. So each data array that is laid out in the memory will have its base pointer, and when we would like to access a particular element in that array, we will have to calculate an offset with respect to that base pointer.
+
+<img src=".\cs61c_pics\Data_Transfer.png" style="zoom:80%;" />
+
+**memory address is in bytes!**
+
+<img src=".\cs61c_pics\mmraddrisinbytes.png" style="zoom:67%;" />
+
+## Endian
+
+**RISC-V is little-endian!**
+
+<img src=".\cs61c_pics\little-endian.png" style="zoom:67%;" />
+
+more interesting details about different endian concept in rrl, see <a href="https://www.youtube.com/watch?v=wXGhuhLKkqg&list=PLnvUoC1Ghb7xlWo9AKariMUtROWHjnPiC&index=5">this video</a>!
+
+<img src=".\cs61c_pics\endian-battle.png" style="zoom:80%;" />
+
+## Principle of locality / Memory Hierarchy
+
+<img src=".\cs61c_pics\mmrHierarchy.png" style="zoom:87%;" />
+
+**register v.s. DRAM**
+
+<img src=".\cs61c_pics\DRAMvsRegister.png" style="zoom:67%;" />
+
+## Load from Memory to Register
+
+`lw`: Load Word:
+
+```assembly
+lw x10, 12(x15)		# Have to be multiple of 4
+add x11, x12, x10
+
+# equal to :
+# 	int A[100];
+# 	g = h + A[3];
+# Note: 
+# 	x15 - base register(pointer to A[0])
+# 	12 - offset in bytes
+# 	offset must be a constant known at assembly time
+```
+
+**Processor**     		<img src=".\cs61c_pics\lw_dataflow.png" style="zoom:67%;" />   	**Memory**
+
+## Store from Register to Memory
+
+`sw`: save word:
+
+```assembly
+lw x10, 12(x15)	# Have to be multiple of 4
+add x10, x12, x10
+sw x10, 40(x15)	# Have to be multiple of 4
+# equal to :
+# 	int A[100];
+#	A[10] = h + A[3];
+```
+
+Dataflow: Processor -> Memory
+
+
+
+## Loading and Storing Bytes
+
+`lb`: load byte;
+
+`sb`: store byte;
+
+```assembly
+lb x10, 3(x11)
+# equal to :
+# 	copy the byte of register x11  whose address offset is 3 
+# 	to the low byte position of x10 
+```
+
+### Sign Extension
+
+Although we don't know what kind  of data types we are operating, in many cases we will handle `signed` numbers. We have to preserve the sign by **sign extension**.
+
+To implement sign extension, you simply take the most significant bit in the copied byte and smear it all over the upper bytes.
+
+<img src=".\cs61c_pics\sign_extension.png" style="zoom:80%;" />
+
+- In case you don't want sign extension, then there `lbu` (load byte unsigned) is also provided for ya'll. (Warning: no `sbu`  at all!)
