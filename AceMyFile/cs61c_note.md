@@ -2,7 +2,8 @@
 
 ## 课程资源
 
-- video：sp21：https://inst.eecs.berkeley.edu/~cs61c/sp21/
+- video：fa20：https://inst.eecs.berkeley.edu/~cs61c/fa20/
+- lab: sp21：https://inst.eecs.berkeley.edu/~cs61c/sp21/
 - project：sp23：https://cs61c.org/sp23/
 - lab：
   - lab00：基本配置以及git和vim等，23看起来比较全面
@@ -1684,3 +1685,393 @@ To implement sign extension, you simply take the most significant bit in the cop
 <img src=".\cs61c_pics\sign_extension.png" style="zoom:80%;" />
 
 - In case you don't want sign extension, then there `lbu` (load byte unsigned) is also provided for ya'll. (Warning: no `sbu`  at all!)
+
+
+
+
+
+## Decision Making / Branch
+
+### Conditional Branch
+
+- `beq`:  branch if equal
+
+```assembly
+beq reg1, reg2, L1
+# equal to :
+# 	if(value in rg1 == value in rg2)
+# 		goto statement labeled L1
+```
+
+- `bne`: branch if not equal
+
+```assembly
+bne reg1, reg2, L1
+# equal to :
+# 	if(value in rg1 != value in rg2)
+# 		goto statement labeled L1
+```
+
+- `blt`: if less than
+
+```assembly
+blt reg1, reg2, L1
+# equal to :
+# 	if(value in rg1 < value in rg2)
+# 		goto statement labeled L1
+```
+
+- `bge`: if greater than or equal
+- `bltu` : unsigned version of if less than
+- `bgeu`: unsigned version of if greater than or equal
+
+**Note**: No `bgt`or `ble` ! ! !  You can try to memorize this with <u>Sandwich Theory</u>:  
+
+> "There doesn't exist a type of **BGT** sandwich, but there does exist a type of  **BLT** sandwich，where 'BLT' stands for bacon, lettuce and tomato."
+
+### Unconditional Branch
+
+`j`: jump to label
+
+```assembly
+j L1  # jump to label L1
+```
+
+### Examples
+
+1. `if` Statement :
+	
+	 |  f   |  g   |  h   |  i   |  j   |
+	 | :--: | :--: | :--: | :--: | :--: |
+	 | x10  | x11  | x12  | x13  | x14  |
+
+```assembly
+# 注意：下面用的是bne命令：		
+# ↓ no	yes→
+bne x13, x14, Exit 		# if(i == j)
+	add x10, x11, x12   	#   f = h + g
+Exit: ...
+```
+
+
+
+2. `if-else` Statement:
+
+|  f   |  g   |  h   |  i   |  j   |
+| :--: | :--: | :--: | :--: | :--: |
+| x10  | x11  | x12  | x13  | x14  |
+
+**不要忘记 `j Exit` !!!**
+
+```assembly
+bne x13, x14, Else
+	add x10, x11, x12
+	j Exit	# Never forget this jump to Exit!
+Else:
+	sub x10, x11, x12
+Exit:...
+```
+
+equivalent in C:
+
+```c
+if(i == j) {
+    f = g + h;
+} else {
+    f = g - h;
+}
+```
+
+
+
+### Loop
+
+The three types of loops in C can be rewritten to each other, so the same branching method can be applied to them as well. We can use conditional branching to implement loops in RISC-V.
+
+Considering the C loop as below:
+
+```c
+int A[20];
+int sum = 0;
+for(int i=0; i<20; i++){
+    sum += A[i];
+}
+```
+
+In assembly aspect, we can implement it like this:
+
+```assembly
+add x9, x8, x0 		# x9 = &A[0]
+add x10, x0, x0 	# x10 = sum
+add x11, x0, x0		# x11 = i
+addi x13, x0, 20	# x13 = 20
+Loop: 
+	bge x11, x13, Done
+	lw x12, 0(x9)		# x12 = A[i]
+	add x10, x10, x12	# sum += A[i]
+	addi x9, x9, 4		# x9 = &A[i + 1]
+	addi x11, x11, 1	# i++
+	j Loop
+Done: ...
+```
+
+注意，在RISC-V里，我们没有用来处理immediate的branching，所以我们无法做含有immediate的比较。所有比较都必须在register之间完成。
+
+此外，当数组前进到下一个元素的时候，<u>增加的地址偏移量为4</u> !
+
+
+
+## Bitwise Operations
+
+|  C   |   RISC-V   |
+| :--: | :--------: |
+|  &   |    and     |
+|  \|  |     or     |
+|  ^   |    xor     |
+|  <<  | sll / slli |
+|  >>  | srl / srli |
+
+**Example**
+
+- Register:
+
+```assembly
+and x5, x6, x7 # x5 = x6 & x7;
+```
+
+- Immediate:
+
+```assembly
+andi x5, x6, 3 # x5 = x6 & 3;
+```
+
+
+
+**Masks:** 
+
+<img src=".\cs61c_pics\masks.png" style="zoom:80%;" />
+
+
+
+**No logical "NOT"**
+
+Use `xor`  with `1111 1111` instead.
+
+
+
+**Logical Shifting**
+
+`sll` : shift left logical
+
+`slli` : shift left logical immediate
+
+```assembly
+slli x11, x12, 2 # x11 = x12 << 2; inserting 0's on right.
+```
+
+`srl` : shift right logical
+
+`srli` : shift right logical immediate
+
+- Question: How to get 12 ?
+  - Ans: shift to the left by 3 add shift to the left by 2. This is commonly done in DSP.
+
+
+
+**Arithmetic Shifting**
+
+`sra`: Shift right arithmetic.
+
+`srai`: Shift right arithmetic immediate.
+
+Those two instruction move *n* bits to the right, for example:
+
+![](.\cs61c_pics\arithmetic_shift.png)
+
+<img src=".\cs61c_pics\arithmetic_shift2.png" style="zoom:87%;" />
+
+
+
+## Assembler to Machine Code
+
+<img src=".\cs61c_pics\assembler2machinecode.png" style="zoom:80%;" />
+
+## How Program is stored
+
+<img src=".\cs61c_pics\How_program_is_stored.png" style="zoom:67%;" />
+
+## Program Execution
+
+**PC**: program counteris a register internal to the processor that holds bytes address of next instruction to be executed.
+
+<img src=".\cs61c_pics\program_exec.png" style="zoom:90%;" />
+
+1. Instruction is fetched from memory
+
+2. then control unit executes instruction using datapath and memory system, and update PC(default add +4 byte to PC, to move to next sequential instruction; branches, jumps alter)
+
+## Symbolic Register Names
+
+e.g. a0 ~ a7 for **argument registers**(x10 ~ a17) for function calls;
+
+e.g. **zero** for x0
+
+## Pseudo-instructions
+
+![](.\cs61c_pics\pseudo-instructions.png)
+
+`mv`: move value in a register to another;
+
+`li`: load a immediate to a register.
+
+`nop`: Do nothing, used when you need to wait for something happens.
+
+## Function
+
+**Six fundamental steps in calling a function**
+
+1. Put <u>arguments</u> in a place where function can access them;
+2. Transfer control to function;
+3. Acquire (local) storage resources needed for function;
+4. Perform desired task of the function;
+5. Put <u>return value</u> in a place where calling code can access it and restore any registers you used; release local storage;
+6. Return control to point of origin, since a function can be called from several points in a program.
+
+### RISC-V Function Call Conventions
+
+- Registers faster than memory, so use them;
+  - a0 ~ a7 (x10 ~ x17): eight <u>argument</u> registers to pass parameters and <u>two return values</u>(a0 ~ a1)
+- **ra**: one <u>return address</u> register to return to the point of origin(x1)
+- **s0 ~ s1**(x8 ~ x9) and **s2 ~ s11**(x18 ~ x27): saved regsters.
+
+
+
+### **RISC-V Function Instructions**
+
+say we have a piece of C code:
+
+```c
+... sum(a,b) {
+    return x + y
+}
+```
+
+Convert it into RISC-V is like:
+
+<img src=".\cs61c_pics\RISCV_func.png" style="zoom:67%;" />
+
+
+
+- why use `jr` when return?
+
+<img src="\cs61c_pics\Y_use_jr.png" style="zoom:50%;" />
+
+**Important Note:**
+
+> **`j label` is a pseudo-instruction for `jal x0, label`.** 
+>
+> `jalr` is used to return to the memory address specified in the second argument. 
+>
+> Keep in mind that jal jumps to a label (which is translated into an immediate by the assembler), whereas jalr jumps to an address stored in a register, which is set at runtime.
+
+- `jal`: make jump easier:
+
+<img src=".\cs61c_pics\jal.png" style="zoom:67%;" />
+
+`jal`: jump and link, but rather "link and jump":
+
+<img src=".\cs61c_pics\jal_and_jr.png" style="zoom:67%;" />
+
+**Actually...**:
+
+<img src=".\cs61c_pics\real_jal.png" style="zoom:67%;" />
+
+### Stack: saves old register values
+
+<img src=".\cs61c_pics\old_reg_value_save2.png" style="zoom:67%;" />
+
+`sp`(Stack Pointer): x2
+
+
+
+**Stack**:
+
+<img src=".\cs61c_pics\Stack2.png" style="zoom:67%;" />
+
+Stack when function is called:
+
+<img src=".\cs61c_pics\satck_when_func_called.png" style="zoom:50%;" />
+
+
+
+### Function Call Example
+
+```c
+int Leaf(int g, int h, int i, int j) {
+    int f;
+    f = (g+h) - (i+j);
+    return f;
+}
+```
+
+Parameter variables `g`, `h`, `i`, `j` are in argument register a0 ~ a3, and `f`  in s0; Assuming we need one more return register s1;
+
+```assembly
+Leaf:
+	addi sp, sp, -8
+	sw s1, 4(sp)
+	sw s0, 0(sp)
+	
+	add s0, a0, a1
+	add s1, a2, a3
+	sub s0, s0, s1
+	
+	lw s0, 0(sp)
+	lw s1, 4(sp)
+	addi sp, sp, 8
+	jr ra
+```
+
+<img src=".\cs61c_pics\code_foe_leaf.png" style="zoom:67%;" />
+
+## Register Conventions
+
+<img src=".\cs61c_pics\register_conventions_1.png" style="zoom:67%;" />
+
+<img src=".\cs61c_pics\register_conventions_2.png" style="zoom:67%;" />
+
+### RISC-V Registers
+
+<img src=".\cs61c_pics\RISC_V_registers_name.png" style="zoom:67%;" />
+
+## Allocating Space on Stack
+
+<img src=".\cs61c_pics\Allocating_space_in_stack.png" style="zoom:67%;" />
+
+<img src=".\cs61c_pics\Using_the_stack.png" style="zoom:67%;" />
+
+## RV32 Memory
+
+<img src=".\cs61c_pics\RV32_mmr_alloc.png" style="zoom:67%;" />
+
+**RV32 convention**:
+
+- Stacks starts in high memory(bfff_fff0~hex~) and grows down, and must be  16-byte boundary
+- RV32 programs (*text segment*) is in low end(0001_0000~hex~)
+- static data segment(constants and other static variables) above text.
+  - global pointer(gp) points to static
+  - RV32 gp = 1000_0000~hex~
+- Heap above static for data structures that grow and shrink, grows up to high address.
+
+**Note:** RV64 / RV128 have different memory layouts.
+
+## RV32 Instructions Summary
+
+<img src=".\cs61c_pics\RV32_instructions_so_far.png" style="zoom:67%;" />
+
+<img src=".\cs61c_pics\instruction.png" style="zoom:100%;" />
+
+ref:[disc 04](https://inst.eecs.berkeley.edu/~cs61c/sp21/pdfs/docs/discussions/disc04_sol.pdf)
+
+
+
