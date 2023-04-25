@@ -4,13 +4,17 @@
 
 - video：fa20：https://inst.eecs.berkeley.edu/~cs61c/fa20/
 - lab: sp21：https://inst.eecs.berkeley.edu/~cs61c/sp21/
+- lab: 建议选最新的。
 - project：sp23：https://cs61c.org/sp23/
+- discussion: su20: https://inst.eecs.berkeley.edu/~cs61c/su20/
+- source: sp21:https://inst.eecs.berkeley.edu/~cs61c/sp21/resources/
 - lab：
   - lab00：基本配置以及git和vim等，23看起来比较全面
   - lab01，lab02：
     - 推荐先做sp21的lab01或者sp23的lab02，对debug工具比较熟悉以后再做sp21的lab02；
     - 对C语言不熟悉的话可以选择sp23的lab01，练习更多更基础。sp21的lab02更高级；
     - sp23的lab02和sp21的lab01内容类似，内容是教你使用工具来debug之类的东西，不过看起来sp23更全面一些：https://cs61c.org/sp23/labs/lab02/#other-useful-gdb-commands-recommended
+- lab03：要用到Venus，因为版本问题建议选最新的。
 
 **Six Great Ideas in Computer Structure**
 
@@ -871,6 +875,16 @@ void set_bit(unsigned * x,
 
 
 
+**取相反数**
+
+对于补码，可以<u>先按位取反，再加一</u>:
+
+```assembly
+lw t0, 0(s0)
+xori t0, t0, 0xFFF
+addi t0, t0, 1
+```
+
 
 
 ## Consts and Enums
@@ -1661,6 +1675,14 @@ sw x10, 40(x15)	# Have to be multiple of 4
 
 Dataflow: Processor -> Memory
 
+### Init An Array
+
+```assembly
+sw x0, 0(s0)	# *p = 0, p-->s0
+addi s1, x0, 2	# int a = 2
+sw s1, 4(s0)	# p[1] = a
+```
+
 
 
 ## Loading and Storing Bytes
@@ -1964,7 +1986,7 @@ Convert it into RISC-V is like:
 
 - why use `jr` when return?
 
-<img src="\cs61c_pics\Y_use_jr.png" style="zoom:50%;" />
+<img src=".\cs61c_pics\Y_use_jr.png" style="zoom:50%;" />
 
 **Important Note:**
 
@@ -2018,14 +2040,17 @@ Parameter variables `g`, `h`, `i`, `j` are in argument register a0 ~ a3, and `f`
 
 ```assembly
 Leaf:
+	# prolouge
 	addi sp, sp, -8
 	sw s1, 4(sp)
 	sw s0, 0(sp)
 	
+	#"meat"
 	add s0, a0, a1
 	add s1, a2, a3
 	sub s0, s0, s1
 	
+	# epilogue
 	lw s0, 0(sp)
 	lw s1, 4(sp)
 	addi sp, sp, 8
@@ -2033,6 +2058,49 @@ Leaf:
 ```
 
 <img src=".\cs61c_pics\code_foe_leaf.png" style="zoom:67%;" />
+
+- 在RISC-V中，add s0, a0, x0和 lw s0, 0(a0)的效果是一样的吗？
+  - 不一定。这两个指令的效果取决于 a0 和 x0 的值。如果 a0 存储的是一个内存地址，而 x0 存储的是 0，那么这两个指令的效果是一样的，都是将 a0 指向的内存中的值赋给 s0。但是，如果 a0 存储的是一个普通的整数，而 x0 存储的是非零的值，那么这两个指令的效果就不一样了，前者是将 a0 和 x0 的值相加赋给 s0，后者是将 a0 作为内存地址，从 a0 + 0 处加载一个 32 位的字赋给 s0。
+
+- 一般来说a0作为argument register的时候存储的是参数的值而不是地址，因此要使用add指令。
+
+### Summary
+
+see more in [disc 04](https://inst.eecs.berkeley.edu/~cs61c/sp21/pdfs/docs/discussions/disc04_sol.pdf)
+
+- How do we pass arguments into functions?
+
+  - Use the 8 arguments registers a0 - a7.
+
+  
+
+- How are values returned by functions? 
+
+  - Use a0 and a1 as the return value registers.
+
+  
+
+- What is sp and how should it be used in the context of RISC-V functions? 
+
+  - sp stands for stack pointer, and it represents the boundary between stored data and free space on the stack. Because the stack grows downward, we subtract from sp to create more space (moving the stack pointer down), and add to sp to free space (moving the stack pointer back up). The stack is mainly used to save (and later restore) the value of registers that may be overwritten.
+
+  
+
+- Which values need to saved by the caller, before jumping to a function using jal?
+
+  -  Registers a0 - a7, t0 - t6, and ra.
+
+  
+
+- Which values need to be restored by the callee, before returning from a function? 
+
+  - Registers sp, gp (global pointer), tp (thread pointer), and s0 - s11. Note that we don’t use gp and tp very often in this course.
+
+  
+
+- In a bug-free program, which registers are guaranteed to be the same after a function call? Which registers aren’t guaranteed to be the same? 
+
+  - Registers a0 - a7, t0 - t6, and ra <u>are not guaranteed to be the same</u> after a function call (which is why they must be saved by the caller). Registers sp, gp, tp, and s0 - s11 <u>are guaranteed to be the same</u> after a function call (which is why the callee must restore them before returning).
 
 ## Register Conventions
 
@@ -2073,5 +2141,69 @@ Leaf:
 
 ref:[disc 04](https://inst.eecs.berkeley.edu/~cs61c/sp21/pdfs/docs/discussions/disc04_sol.pdf)
 
+## Lab03 Supplement
+
+### Venus
+
+ref:https://cs61c.org/sp23/resources/venus-reference/#the-editor-tab
+
+#### Derectives
+
+- `.data` : In RISC-V global variables are declared under the `.data` directive. This represents the data segment. It will look like this:
+
+```assembly
+.data
+n: .word 12
+```
 
 
+
+- `.text` :Everything under this directive is our code.
+
+
+
+### New Instructions
+
+- `la`: 
+
+```assembly
+la t3, n # load the address of the label n
+lw t3, 0(t3) # get the value that is stored at the adddress denoted by the label n
+```
+
+This instruction loads the address of a label. The first line essentially sets `t3` to be a pointer to `n`. Next, we use `lw` to dereference `t3` which will set `t3` to the value stored at `n`.
+
+You can think of the code above as doing something along the lines of:
+
+```c
+t3 = &n;
+t3 = *n;
+```
+
+> Now, you're probably thinking, "Why can't we directly set `t3` to `n`?" In the `.text` section, there is no way that we can directly access `n`. (Think about it. We can't say `add t3, n, x0`. The arguments to `and` must be registers and `n` is not a register.) The only way that we can access it is by obtaining the address of `n`. Once we obtain the address of `n`, we need to dereference it which can be done with `lw`. `lw` will reach into memory at the address that you specify and load in the value stored at that address. In this case, we specified the address of `n` and added an offset of `0`.
+
+
+
+- `ecall`: 
+
+Printing is a system call. You'll learn more about these later in the semester, but a system call is essentially a way for your program to interact with the Operating System. To make a system call in RISC-V, we use a special instruction called `ecall`. To print out an integer, we need to pass two arguments to `ecall`. The first argument specifies what we want `ecall` to do (in this case, print an integer). To specify that we want to print an integer, we pass a `1`. The second argument is the integer that we want to print out.
+
+```assembly
+finish:
+    addi a0, x0, 1 # argument to ecall to execute print integer
+    addi a1, t0, 0 # argument to ecall, the value to be printed
+    ecall # print integer ecall
+```
+
+In C, we are used to functions looking like `ecall(1, t0)`. In RISC-V, we cannot pass arguments in this way. To pass an argument, we need to place it in an argument register (`a0`-`a7`). When the function executes, it will look in these registers for the arguments. (If you haven't seen this in lecture yet, you will soon). The first argument should be placed in `a0`, the second in `a1`, etc.
+
+To set up the arguments, we placed a `1` in `a0` and we placed the integer that we wanted to print in `a1`.
+
+Next, let's **terminate our program**! This also requires `ecall`
+
+```assembly
+addi a0, x0, 10 # argument to ecall to terminate
+ecall # terminate ecall
+```
+
+In this case, `ecall` only needs one argument. Setting `a0` to `10` specifies that we want to terminate the program.
