@@ -2147,6 +2147,22 @@ ref:[disc 04](https://inst.eecs.berkeley.edu/~cs61c/sp21/pdfs/docs/discussions/d
 
 ref:https://cs61c.org/sp23/resources/venus-reference/#the-editor-tab
 
+#### Venus支持伪指令
+
+> - 请问Risc-V里可以直接使用mv, j之类的伪指令吗?
+>
+>   - 在RISC-V汇编语言中,不可以直接使用伪指令如mv(移动指令)和j(跳转指令)。这是因为RISC-V是一种精简指令集计算机(Reduced Instruction Set Computer),其指令集设计遵循精简和统一的原则。
+>
+>     总的来说,RISC-V体系结构为了追求设计的简单化和效率,避免了提供专用的伪指令或非统一的指令集,而是通过已有指令的组合来实现相同的功能,这是RISC-V作为精简指令集计算机的一个典型特征。
+>
+> 
+>
+> - 可是，我在Venus里编辑代码的时候，似乎可以使用伪指令？
+>   - 你说的对,在Venus这款RISC-V的汇编编辑器中,确实支持使用伪指令"mv"和"j"。这似乎与我们前面讨论的RISC-V理念相悖。其实,这是因为Venus作为一款开发编辑器,考虑到方便开发人员使用,提供了这些伪指令,但它会自动将这些伪指令翻译成RISC-V真正支持的指令。例如,当您编写代码"mv t0, t1"时,Venus会自动翻译成真正的RISC-V指令"add t0, t1, x0"。
+>     同样,当您编写"j label"时,Venus会翻译成"jal x0, offset"的形式,其中offset是label对应位置的偏移地址。所以,尽管Venus提供了这些伪指令以方便开发人员使用,但最终它还是会将这些伪指令翻译成RISC-V体系结构真正支持的指令集。这不会影响最终编译出的Machine Code。这种做法相当于一种语法糖,在不改变最终结果的前提下,方便了开发人员的编码过程。但开发人员在理解RISC-V体系结构和指令集时,还是需要理解RISC-V支持的是什么指令,怎样组合这些指令来实现各种功能。伪指令只是一个编辑器层面的简化,并不属于RISC-V体系结构本身。
+>
+> 
+
 #### Derectives
 
 - `.data` : In RISC-V global variables are declared under the `.data` directive. This represents the data segment. It will look like this:
@@ -2173,7 +2189,7 @@ lw t3, 0(t3) # get the value that is stored at the adddress denoted by the label
 
 This instruction loads the address of a label. The first line essentially sets `t3` to be a pointer to `n`. Next, we use `lw` to dereference `t3` which will set `t3` to the value stored at `n`.
 
-You can think of the code above as doing something along the lines of:
+<span id="load-variables">You can think of the code above as doing something along the lines of:</span>
 
 ```c
 t3 = &n;
@@ -2207,3 +2223,111 @@ ecall # terminate ecall
 ```
 
 In this case, `ecall` only needs one argument. Setting `a0` to `10` specifies that we want to terminate the program.
+
+
+
+### Venus载入变量
+
+```assembly
+.data
+n: .word 12	# variable n
+
+.text
+main:
+    la t3, n # load the address of the label n
+    lw t3, 0(t3) # get the value that is stored at the address denoted by the label n
+```
+
+also is described <a href="#load-variables">above</a>.
+
+### 小技巧 - 取数组的某个元素
+
+```assembly
+# 假设a0表示要的是数组的第a0个元素
+# x1是数组的基地址
+	add t0 a0 x0    # get index 
+    slli t0 t0 2    # get index * 4
+    add t0 a1 t0    # get address of correspond output
+    lw a0 0(t0)     # load value
+```
+
+
+
+## RISC-V Instruction Format
+
+Traditional computers led to some consequences:
+
+-  Everything has a memory address
+
+  - And one register keeps address of instructions: PC
+
+  
+
+- Binary Compatibility
+
+  - Programs are distributed in binary form
+    - Programs bound to specific instruction set
+    - Different version for phones and Computers
+  - New machines want to run old programs as well as programs compiled to new instructions and it leads to "backward-compatible" instruction set evolving over time.
+
+### Instructions as Numbers
+
+<img src=".\cs61c_pics\instructions-as-numbers.png" style="zoom:80%;" />
+
+<img src=".\cs61c_pics\instructions-as-numbers2.png" style="zoom:80%;" />
+
+
+
+### R-Format Instruction Layout
+
+R-Format for register-register arithmetic operations.
+
+<img src=".\cs61c_pics\R-instruction-layout.png" style="zoom:67%;" />
+
+- **opcode:**  partially specifies what instruction it is.
+  - Note: This field is equal to 0110011~bin~ for all R-Format register-register arithmetic instructions 
+- **funct7 + funct3:** combined with opcode, these two fields describe what operation to perform 
+  - Question:  Why aren’t opcode and funct7 and funct3 a single 17- bit field? 
+
+<img src=".\cs61c_pics\R-intruction-example.png" style="zoom:67%;" />
+
+**All RV-32 R-format instructions**:
+
+<img src=".\cs61c_pics\all-R-instruc.png" style="zoom:67%;" />
+
+You may note that `add` and `sub` are similar to each other, and this is because they use the same hardware to perform their functions. And the 2nd `1` in func7 part of `sub` means to do *sign extension*, and you can spot `sra` has a `1` in its 2nd bit of func7 part as well.
+
+
+
+### I-Format
+
+<img src=".\cs61c_pics\I-format.png" style="zoom:67%;" />
+
+**All RV-32 I-format instructions**:
+
+<img src=".\cs61c_pics\all-i-format-at-once.png" style="zoom:67%;" />
+
+### Load
+
+Load instructions have a similar layout to I-Format:
+
+<img src=".\cs61c_pics\load-layout.png" style="zoom:70%;" />
+
+All load format:
+
+<img src=".\cs61c_pics\all-Load-format.png" style="zoom:67%;" />
+
+### Store
+
+- Store needs to read two registers, `rs1` for base memory address, and `rs2` for data to be stored, as well immediate offset! 
+- Can’t have both `rs2` and `immediate` in same place as other instructions! 
+- Note that stores don’t write a value to the register file, no rd!
+- RISC-V design decision is to move low 5 bits of immediate to where rd field was in other instructions – keep rs1/rs2 fields in same place 
+  - Register names more critical than immediate bits in hardware design.
+
+<img src=".\cs61c_pics\Save-format.png" style="zoom:67%;" />
+
+**All Store Formats**:
+
+<img src=".\cs61c_pics\all-store-instruction-format.png" style="zoom:67%;" />
+
