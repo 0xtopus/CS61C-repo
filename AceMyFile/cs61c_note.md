@@ -633,9 +633,11 @@ https://valgrind.org/docs/manual/mc-manual.html
 
 # Number Representation
 
-**Unsigned number **: numbers that only represents positive number from 0 to 2^n^ - 1.
+## **Unsigned number **
 
-**Two's Complement** (补码): 
+numbers that only represents positive number from 0 to 2^n^ - 1.
+
+## **Two's Complement** (补码)
 
 - leftmost bit indicates sign, 0 for positive and 1 for positive. 
 
@@ -659,7 +661,7 @@ https://valgrind.org/docs/manual/mc-manual.html
 
   
 
-**Bias Encoding**
+## **Bias Encoding**
 
 - \# = bias + unsigned
   1. represent # as unsigned.
@@ -684,7 +686,9 @@ so 010 represents -1
 
 - Do <a href="https://inst.eecs.berkeley.edu/~cs61c/sp21/pdfs/docs/discussions/disc01_sol.pdf">this exercise</a> to get a deeper understanding!
 
-  <img src=".\cs61c_pics\everyBaseIsBase10!.png" style="zoom:75%;" />
+  <img src=".\cs61c_pics\everyBaseIsBase10!.png" style="zoom:35%;" />
+  
+  
 
 # C Intro
 
@@ -2331,3 +2335,230 @@ All load format:
 
 <img src=".\cs61c_pics\all-store-instruction-format.png" style="zoom:67%;" />
 
+generate a pic for me: an asian thin person sitting at a desk with their back facing the viewer, using a smartphone chatting with his friend on wechat. The person is in their mid-20s. The person is sitting in a black swivel chair and is leaning slightly to the right while holding the phone with their left hand.
+
+
+
+### B-format
+
+Branches read two registers but don’t write to a register (similar to stores).
+
+使用immediate field作为PC指针的偏移量。
+
+为了照顾compacted指令集（每个指令只有16bits），当：
+
+- 不需要分支的时候：PC = PC + 4
+- 需要分支的时候： PC = PC + **immediate * 2**
+
+(immediate是要跳转到的指令的位置，可以在前也可以在后，在32字长的系统里，此时的immediate都是偶数)
+
+<img src=".\cs61c_pics\b-format.png" style="zoom:67%;" />
+
+因为在32位字长的系统中，immediate都是偶数，所以最低位都是0，可以忽略不写，因此可以只存储 1 ~ 12位（imm[1] ~ imm[12]），而不存储0位（imm[0]）。
+
+**Example:**
+
+<img src=".\cs61c_pics\b-format-example.png" style="zoom:50%;" />
+
+imm低位： 前四位0100 : 省略最低位的0，且因为最终是immediate * 2，所以从16变成4（1000(0) -> 0100(0)）,第五位0是imm[11]，为0.
+
+<img src=".\cs61c_pics\b-format-example-2.png" style="zoom:67%;" />
+
+
+
+**指令中的immediate是如何编码成一个32位的字的？**：
+
+<img src=".\cs61c_pics\instruction-imm-encoding.png" style="zoom:67%;" />
+
+注：图中的 inst[num] 代表对应instruction里的第num位。
+
+
+
+**All B-format instructions**
+
+<img src=".\cs61c_pics\all-b-format-instructions.png" style="zoom:67%;" />
+
+
+
+### U-format
+
+ Upper Immediate instructions:
+
+<img src=".\cs61c_pics\u-format.png" style="zoom:67%;" />
+
+- Has 20-bit immediate in upper 20 bits of 32-bit instruction word
+- One destination register, rd
+- Used for two instructions
+  - lui – Load Upper Immediate 
+  - auipc – Add Upper Immediate to PC
+
+#### lui
+
+LUI writes the upper 20 bits of the destination with the immediate value, and clears the lower 12 bits.
+
+<img src=".\cs61c_pics\u-format.png" style="zoom:67%;" />
+
+Together with an addi to set low 12 bits, can create any 32-bit value in a register using two instructions (lui/addi).
+
+> "So when we would like to put in a 32-bit immediate into a destination register, we need to chop that immediate into halves. This happened to some other Louis, which was a French king. Any similarities are accidental here."
+
+```assembly
+# Set x10 = 0x87654321
+lui x10, 0x87654
+addi x10,0x321
+```
+
+But there will be a bug if:
+
+```assembly
+lui x10, 0xDEADB 		# x10 = 0xDEADB000
+addi x10, x10, 0xEEF 	# x10 = 0xDEADAEEF
+```
+
+You wil find that the result is  0xDEAD**A**EEF instead of desiring 0xDEAD**B**EEF. Why? Because `addi` does sign extension for 0xEEF and so the real number we use in process is <u>0x11111EEF</u>, and thus 0xDEADB is deduct by one to become 0xDEADA.
+
+To get around this, use 0xDEAD**C**:
+
+```assembly
+lui x10, 0xDEADC 		# x10 = 0xDEADC000 
+addi x10, x10, 0xEEF 	# x10 = #0xDEADBEEF
+```
+
+or use Assembler pseudo-op handles all of this:
+
+```assembly
+li x10, 0xDEADBEEF # Creates two instructions
+```
+
+#### auipc
+
+Adds upper immediate value to PC and places result in destination register.
+
+Used for PC-relative addressing.
+
+```assembly
+Label: auipc x10, 0 # Puts address of Label in x10
+```
+
+
+
+### J-format
+
+#### jal
+
+<img src=".\cs61c_pics\j-format.png" style="zoom:67%;" />
+
+- jal saves PC+4 in register `rd` (the return address) .
+  - Assembler “j” jump is pseudo-instruction, uses jal but sets rd=x0 to discard return address.
+
+- Set PC = PC + offset (PC-relative jump) .
+- Target somewhere within ±2^19^ locations, 2 bytes apart .
+  - ±2^18^ 32-bit instructions.
+- Immediate encoding optimized similarly to branch instruction to reduce hardware cost.
+
+```assembly
+# j pseudo-instruction
+j Label = jal x0, Label # Discard return address
+
+# Call function within 218 instructions of PC
+jal ra, FuncName
+```
+
+#### jalr(I-format)
+
+<img src=".\cs61c_pics\jalr-I-format.png" style="zoom:67%;" />
+
+```assembly
+jalr rd, rs, immediate
+```
+
+- Writes PC+4 to rd (return address) 
+- Sets PC = rs + immediate 
+- Uses same immediates as arithmetic and loads 
+- no multiplication by 2 bytes 
+- In contrast to branches and jal
+
+**Example**:
+
+```assembly
+# ret and jr psuedo-instructions
+ret = jr ra = jalr x0, ra, 0
+
+# Call function at any 32-bit absolute address
+lui x1, <hi20bits>
+jalr ra, x1, <lo12bits>
+
+# Jump PC-relative with 32-bit offset
+auipc x1, <hi20bits>
+jalr x0, x1, <lo12bits>
+```
+
+### Format Summary
+
+<img src=".\cs61c_pics\format-summary.png" style="zoom:67%;" />
+
+
+
+### Compiler v.s interpreter
+
+So you could do that as well.
+
+You typically interpret high-level language
+
+when you don't care about performance,
+
+and you typically translate to a lower-level language
+
+
+
+Interpreter directly executes the program
+
+in whatever the language it is.
+
+Here's Scheme, high-level language,
+
+and let's run it right there.
+
+Here's Python, run it right there.
+
+
+
+Okay, so those are different assembler languages.
+
+We're living in the RISC-V world now.
+
+Assembler removes the pseudoinstructions.
+
+It sets up two tables, a symbol table
+
+of all the symbols it knows about in that file,
+
+and a relocation table of all the things
+
+that need to be fixed in the linker stage.
+
+The linker goes to the symbols, takes all of them in aggregate,
+
+figures out, are there any duplicate symbols?
+
+This is a summary of the whole lecture in one minute.
+
+Copies all that text and data from a.out into that memory.
+
+Sets the stack pointer with any arguments on the command line.
+
+Sets up a0 and a1 to be the value of argc and argv,
+
+and sets the stack pointer, clears the registers,
+
+and says go, and watches back, happily as a clam,
+
+as this thing continues to run.
+
+And when it's all done, whatever the return value was,
+
+it passes it back through, through the OS
+
+to the top level, and we're all done.
+
+Shoo, amazing.
