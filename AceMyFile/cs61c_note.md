@@ -712,6 +712,19 @@ For C, there are generally two part process of compiling
   - Executable must be rebuilt on each new system.
   - "Change -- compile -- run" iteration cycle can be slow during development.
 
+我的理解：
+
+- compiled code的执行速度更快，当代码量大的时候编译时间较长，compiler把高级语言转换为机器码。
+- interpreter每次只翻译一个语句，且大小一般比compiler来的小，而且比compiler更灵活。但是运行代码的速度不如compiler。
+
+**1. Which is better: Interpreter or Compiler?**
+
+The Interpreter is useful in the case of debugging, but it is slower and a Compiler goes for full code, error resolution becomes challenging. Therefore, which one is better, totally depends on what work has to be performed by the user.
+
+**2. Which is faster: Interpreter or Compiler?**
+
+Whenever any process is considered, the interpreter is faster than the compiler. But, whenever any program is already compiled, in that case, execution of the compiled program is faster than an interpreted program.
+
 ## CPP
 
 C source files first pass through  *macro processor*, *CPP*, before compiler sees code.
@@ -2182,6 +2195,12 @@ n: .word 12
 
 
 
+**<span id="all-directives">All directives</span>**:
+
+<img src=".\cs61c_pics\directives.png" style="zoom:87%;" />
+
+
+
 ### New Instructions
 
 - `la`: 
@@ -2499,66 +2518,276 @@ jalr x0, x1, <lo12bits>
 
 
 
-### Compiler v.s interpreter
+### Disc.05
 
-So you could do that as well.
+link: https://inst.eecs.berkeley.edu/~cs61c/su20/pdfs/discussions/disc05_sol.pdf
 
-You typically interpret high-level language
+关于范围的讨论：
 
-when you don't care about performance,
+- What is the range of 32-bit instructions that can be reached from the current PC using a branch instruction? 
 
-and you typically translate to a lower-level language
+  - The immediate field of the branch instruction is 12 bits. This field only references addresses that are divisible by 2, so the immediate is multiplied by 2 before being added to the PC. Since it is signed, the branch immediate can therefore move the PC in the range of [−2^12^ , 2^12^ − 1] bytes. If we’re in a version of RISC-V that has 2-byte instructions, then this corresponds to a range of [−2^11^ , 2^11^ − 1] instructions. The instructions we use, however, are 4 bytes so they reside at addresses that are divisible by 4 not 2. Therefore, we can only reference half as many 4-byte instructions as 2-byte instructions, and the range of 4-byte instructions is [−2^10^ , 2^10^ − 1]
+  - 简单来说，B-format的命令码里有11位imm（从1 ~12），可以表示的范围字面上是 -2^11^ ~ 2^11^- 1， 但是由于imm[0]是省略的，所以实际上是有多了一位，是 -2^12^ ~ 2^12^- 1。如果在字长为16位（两个字节）的机器上，那么由于实际上要除以二(因为有一些码是在字的地址中间，不能使用)所以范围为-2^11^ ~ 2^11^- 1，在四个字节为字长的机器上，要除以四，为-2^10^ ~ 2^10^- 1
+
+- What is the maximum range of 32-bit instructions that can be reached from the current PC using a jump instruction? 
+
+  - The immediate field of the jal instruction is 20 bits, while that of the jalr instruction is only 12 bits, so jal can reach a wider range of instructions. Similar to above, this 20-bit immediate is multiplied by 2 and added to the PC to get the final address. Since the immediate is signed, we have a range of [−2 20 , 2 20 − 1] bytes, or [−2 19 , 2 19 − 1] 2-byte instructions. As we actually want the number of 4-byte instructions, we can reference those within [−2 18 , 2 18 − 1] instructions of the current PC.
+
+  
+
+**关于生成可执行文件的过程**：
+
+1.1 The compiler may output pseudoinstructions.
+
+- true. 编译器可能会输出伪指令。编译器生成的汇编代码可能包含伪指令,伪指令不会翻译成实际的机器指令。
 
 
 
-Interpreter directly executes the program
+1.2 The main job of the assembler is to generate optimized machine code.
 
-in whatever the language it is.
-
-Here's Scheme, high-level language,
-
-and let's run it right there.
-
-Here's Python, run it right there.
+- false. 汇编器的主要工作不是产生优化的机器代码。**汇编器的工作是将汇编语言翻译成机器代码**,优化通常在编译和链接阶段完成。
 
 
 
-Okay, so those are different assembler languages.
+1.3 The object files produced by the assembler are only moved, not edited, by the linker.
 
-We're living in the RISC-V world now.
+- false 链接器不仅移动汇编器生成的目标文件,也会编辑它们。链接器需要修复和重定位目标文件中的地址和符号引用。
 
-Assembler removes the pseudoinstructions.
 
-It sets up two tables, a symbol table
 
-of all the symbols it knows about in that file,
+1.4 The destination of all jump instructions is completely determined after linking.
 
-and a relocation table of all the things
+- false. **跳转指令的最终目标在链接后不完全确定。链接器确定每个跳转指令的相对目标,但是跳转的绝对地址只有在程序加载时才能确定。**
 
-that need to be fixed in the linker stage.
 
-The linker goes to the symbols, takes all of them in aggregate,
 
-figures out, are there any duplicate symbols?
+所以总结起来:1. 编译器的输出可能包含伪指令。2. 汇编器主要工作是翻译,而不是优化。3. 链接器不仅移动也编辑目标文件。4. 跳转指令的最终目标在链接后并不完全确定,需要等到程序加载时才能确定。
 
-This is a summary of the whole lecture in one minute.
+# Compiler, Assembler, Linker, Loader
 
-Copies all that text and data from a.out into that memory.
+<a href="https://inst.eecs.berkeley.edu/~cs61c/fa20/pdfs/lectures/lec13.pdf">Lecture Slide</a>
 
-Sets the stack pointer with any arguments on the command line.
+## Compiler v.s interpreter
 
-Sets up a0 and a1 to be the value of argc and argv,
+interpreter和compiler是两种不同的程序翻译器，它们都可以把高级语言（如Python或Java）转换成低级语言（如机器语言或汇编语言），让计算机能够执行。它们的主要区别是：
 
-and sets the stack pointer, clears the registers,
+- Compiler一次性把整个源代码翻译成目标代码，然后执行目标代码。interpreter则是一边翻译一边执行源代码，每次只翻译一行或一段。
+- Compiler在翻译过程中会检查所有的错误和限制，而interpreter只在执行时才发现错误。
+- Compiler生成的目标代码运行速度更快，但占用更多的内存空间。interpreter生成的目标代码运行速度更慢，但占用更少的内存空间。
+- Compiler适合用于编译型语言（如C或C++），而interpreter适合用于解释型语言（如Python或Ruby）。
 
-and says go, and watches back, happily as a clam,
+可以参考之前的<a href="#compile vs. interpret">笔记部分</a>
 
-as this thing continues to run.
+When to choose?
 
-And when it's all done, whatever the return value was,
+- In general, we interpret a high-level language when efficiency is not critical （且interpreter因为更贴近高级语言，debug更容易一些）；
+- translate to a lower-level language to increase performance；
 
-it passes it back through, through the OS
+> translator是一个通用术语，指的是将一种高级语言代码转换为另一种高级语言代码或低级语言代码（如机器码或汇编语言）的工具，包括compiler, assembler和interpreter[1](https://www.microcontrollertips.com/compilers-translators-interpreters-assemblers-faq/)。
+>
+> - compiler是编译器，将高级语言代码转换为汇编语言代码[2](https://www.cnblogs.com/zqybegin/articles/12454154.html)。
+> - assembler是汇编器，将汇编语言代码转换为机器码[1](https://www.microcontrollertips.com/compilers-translators-interpreters-assemblers-faq/) [3](https://www.geeksforgeeks.org/language-processors-assembler-compiler-and-interpreter/)。
+> - interpreter是解释器，直接执行高级语言代码，不生成汇编语言或机器码[2](https://www.cnblogs.com/zqybegin/articles/12454154.html)。
+>
+> 您可以把compiler和interpreter看作是translator的两种类型，而assembler看作是compiler的一种特例。
 
-to the top level, and we're all done.
 
-Shoo, amazing.
+
+Lecture Slide:
+
+**Interpreter:**
+
+- Generally easier to write interpreter 
+
+- Interpreter closer to high-level, so can give better error messages (e.g., VENUS)
+  - Translator reaction: add extra information to help debugging (line numbers, names) 
+
+- Interpreter slower , code smaller
+- Interpreter provides instruction set independence: run on any machine
+
+**Compiler:**
+
+- Translated/compiled code almost always more efficient and therefore higher performance: 
+  - Important for many applications, particularly operating systems 
+- Translation/compilation helps “hide” the program “source” from the users: 
+  - One model for creating value in the marketplace (e.g., Microsoft keeps all their source code secret)
+  - Alternative model, “open source”, creates value by publishing the source code and fostering a community of developers
+
+
+
+## Compiler
+
+运行：
+
+```bash
+gcc -O2 -S -c foo.c
+```
+
+即可进行编译，生成`.s`文件。
+
+编译器主要是把高级语言转换为汇编语言（可能含有伪指令）。
+
+
+
+## Assembler
+
+- Input: Assembly Language Code (includes pseudo ops) (e.g., foo.s for RISC-V) 
+
+- Output: Object Code, information tables (true assembly only) (e.g., foo.o for RISC-V) 
+
+- Reads and Uses <a href="all-directives">Directives</a> 
+
+- Replace Pseudo-instructions 
+
+- Produce Machine Language 
+
+- Creates Object File 
+
+  
+
+**Produce Machine Language**： 
+
+  - 在产生机器语言的时候，有"three passes"：
+    - 1st pass: replaces all pseudo instructions
+    - 2nd pass: make note where all the *labels* are
+    - 3rd pass: use label positions to generate code when seeing label in branch
+  - 在处理和PC有关的跳转和分支时：
+    - `j offset` pseudo instruction expands to `jal zero, offset` 
+    - Just count the number of instruction half-words between target and jump to determine the offset: *position-independent code (PIC)*
+  - 在处理静态数据时：
+    - `la` gets broken up into `lui` and `addi` (use `auipc`/`addi` for PIC) 
+    - These require the full 32-bit address of the data
+  - 但是因为还不能确定运行时各个指令和static data在内存里的具体位置，所以我们还需要创建两个表格（table），以便在Link阶段确定后让Linker可以补全信息。
+    1. Symbol Table：
+       - List of “items” in this file that may be used by other files 
+         - Labels: function calling 
+         - Data: anything in the .data section; variables which may be accessed across files
+    2. Relocation Table:
+       - List of “items” whose address this file needs
+         - Any absolute label jumped to: `jal`, `jalr`  
+           - Internal  
+           - External (including lib files)  
+         - Any piece of data in static section  
+
+<img src=".\cs61c_pics\Object-file-format.png" style="zoom:70%;" />
+
+
+
+## Linker
+
+- Input: Object code files, information tables (e.g., foo.o,libc.o for RISC-V) 
+- Output: Executable code (e.g., a.out for RISC-V) 
+- Combines several object (.o) files into a single executable (“linking”) 
+- Enable separate compilation of files
+
+
+
+**Steps**:
+
+- Step 1: Take text segment from each .o file and put them together 
+
+- Step 2: Take data segment from each .o file, put them together, and concatenate this onto end of text segments 
+
+  <img src=".\cs61c_pics\Linker.png" style="zoom:67%;" />
+
+- Step 3: Resolve references 
+
+  - Go through Relocation Table; handle each entry, I.e., fill in all absolute addresses
+  - <img src=".\cs61c_pics\4-types-address.png" style="zoom:67%;" />
+
+**Static vs. Dynamically linked libraries**
+
+Static: 
+
+- Library is now part of the executable, so if the library updates, we don’t get the fix (have to recompile if we have source) 
+- Includes the entire library even if not all of it will be used 
+- Executable is self-contained
+
+Dynamic:
+
+- Space/time issues
+  + \+ Storing a program requires less disk space 
+  + \+ Sending a program requires less time 
+  + \+ Executing two programs requires less memory (if they share a library) 
+  + \- At runtime, there’s time overhead to do link 
+
+- Upgrades 
+  - \+ Replacing one file (libXYZ.so) upgrades every program that uses library “XYZ” \
+  - – Having the executable isn’t enough anymore(if sth is off in libraries, your executable will crash too)
+
+## Loader
+
+- Input: Executable Code (e.g., a.out for RISC-V) 
+- Output: (program is run) 
+- Executable files are stored on disk 
+- When one is run, loader’s job is to load it into memory and start it running 
+- In reality, loader is the operating system (OS) 
+  - Loading is one of the OS tasks
+
+
+
+## Conclusion
+
+<img src=".\cs61c_pics\CALL_conclusion.png" style="zoom:87%;" />
+
+> This is a summary of the whole lecture in one minute.
+>
+> You typically interpret high-level language
+>
+> when you don't care about performance,
+>
+> and you typically translate to a lower-level language
+>
+> 
+>
+> Interpreter directly executes the program
+>
+> in whatever the language it is.
+>
+> Here's Scheme, high-level language,
+>
+> and let's run it right there.
+>
+> Here's Python, run it right there.
+>
+> 
+>
+> Okay, so those are different assembler languages.
+>
+> We're living in the RISC-V world now.
+>
+> **Assembler** removes the pseudoinstructions.
+>
+> It sets up two tables, a symbol table
+>
+> of all the symbols it knows about in that file,
+>
+> and a relocation table of all the things
+>
+> that need to be fixed in the linker stage.
+>
+> **The linker** goes to the symbols, takes all of them in aggregate,
+>
+> figures out, are there any duplicate symbols?
+>
+> **Loader:**
+>
+> Copies all that text and data from a.out into that memory.
+>
+> Sets the stack pointer with any arguments on the command line.
+>
+> Sets up a0 and a1 to be the value of argc and argv,
+>
+> and sets the stack pointer, clears the registers,
+>
+> and says go, and watches back, happily as a clam,
+>
+> as this thing continues to run.
+>
+> And when it's all done, whatever the return value was,
+>
+> it passes it back through, through the OS
+>
+> to the top level, and we're all done.
+>
+> Shoo, amazing.
