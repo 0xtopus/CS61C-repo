@@ -2164,6 +2164,56 @@ ref:[disc 04](https://inst.eecs.berkeley.edu/~cs61c/sp21/pdfs/docs/discussions/d
 
 ref:https://cs61c.org/sp23/resources/venus-reference/#the-editor-tab
 
+sp-23的lab: 使用GIt命令行切换到仓库目录里运行： 
+
+```bash
+java -jar tools/venus.jar . -dm
+```
+
+到Venus的网页上运行，把本地文件挂载到Venus上：
+
+```bash
+ mount local vmfs
+```
+
+
+
+如果你想要做之前学期的lab，那么有可能会发现由于Venus更新之后旧版的lab无法被挂载到新版的Venus上。
+
+解决方法：以sp-21为例：
+
+把sp-23的仓库clone到本地，然后把sp-23仓库里的`tools`文件夹拷贝到你的sp-21的仓库文件夹里，然后在Git命令行里运行：
+
+```bash
+java -jar tools/venus.jar . -dm
+```
+
+到Venus的网页上运行，把本地文件挂载到Venus上：
+
+```bash
+ mount local vmfs
+```
+
+新旧版本不兼容的原因可能是sp-21使用的是python来挂载，而现在最新版的Venus使用Java来挂载。
+
+
+
+如果你需要使用命令行运行Venus，请参考<a href="https://cs61c.org/sp23/resources/venus-reference/#the-venus-cli">最新版(sp-23的Venus)使用说明</a>
+
+对于某些在sp-21里使用python运行的命令，比如lab04里的convention checker：
+
+```bash
+./tools/venus -cc lab04/cc_test.s
+```
+
+使用下列命令代替：
+
+```bash
+java -jar ./tools/venus.jar -cc lab04/cc_test.s
+```
+
+
+
 #### Venus支持伪指令
 
 > - 请问Risc-V里可以直接使用mv, j之类的伪指令吗?

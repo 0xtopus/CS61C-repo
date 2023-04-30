@@ -16,7 +16,11 @@ TestFailed: .asciiz "Test Failed!"
 #Modify the test so that you can catch the bugs in four of the five solutions!
 main:
 	la a0 inputarray
-    jal accumulatorone
+    # accumulatorone doesn't save and restore save registers in callee
+    # accumulatortwo's stack grows upward instead of growing downward
+    # accumulatorfour uses t2 without initiating it
+    # 
+    jal accumulatorfive
     li t0 28
     beq a0 t0 Pass
 Fail:
