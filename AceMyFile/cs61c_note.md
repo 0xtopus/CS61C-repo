@@ -16,6 +16,44 @@
     - sp23的lab02和sp21的lab01内容类似，内容是教你使用工具来debug之类的东西，不过看起来sp23更全面一些：https://cs61c.org/sp23/labs/lab02/#other-useful-gdb-commands-recommended
 - lab03：要用到Venus，因为版本问题建议选最新的。
 
+
+
+**Project:**
+
+Project的仓库是和lab分开的，每个project都有一个独立的仓库
+
+要初始化project的仓库，操作如下：
+
+- 新建一个目录，用git命令行工具进入这个目录内
+- 使用`git init`初始化这个文件夹
+- 设置远程仓库，以sp-23的project 2为例: 
+
+```bash
+git remote add starter https://github.com/61c-teach/sp23-proj2-starter.git
+```
+
+- 拉取仓库到本地，分支名可能是`main`或者`master`，你可以去对应的仓库里查看：
+
+```bash
+git pull starter <分支名>
+```
+
+- 在github里新建一个仓库，然后把自己的远程仓库添加进来：
+
+在Git终端里运行：
+
+```bash
+git remote add origin <自己仓库的地址>
+```
+
+然后push：
+
+```bash
+git push -u origin master
+```
+
+
+
 **Six Great Ideas in Computer Structure**
 
 1. Abstraction
@@ -2841,3 +2879,88 @@ Dynamic:
 > to the top level, and we're all done.
 >
 > Shoo, amazing.
+
+
+
+# Synchronous Digital System
+
+Hardware of a processor, e.g., RISC-V, is a **Synchronous Digital System**.
+
+**Synchronous**: All operations coordinated by a central clock.
+
+## Transistor
+
+**CMOS**: Modern digital systems designed in CMOS . MOS transistors act as **voltage controlled switches**.
+
+- MOS: Metal-Oxide on Semiconductor 
+- C for complementary: normally-open and normally-closed switches
+
+<img src=".\cs61c_pics\MOS_transistors.png" style="zoom:67%;" />
+
+<img src="\cs61c_pics\mos_not_gate.png" style="zoom:67%;" />
+
+模电：N型栅极高电平导通， P型栅极低电平导通。
+
+- Block Diagram / Truth table: 真值表
+
+## **SDS** 
+
+Synchronous Digital Systems are made up of **two basic types of circuits**: 
+
+- Combinational Logic (CL) circuits 
+  - Our previous adder circuit is an example. 
+  - Output is a function of the inputs only. 
+  - Similar to a pure function in mathematics, y = f(x). (No way to store information from one invocation to the next. No side effects) 
+- State Elements 
+  - circuits that store information.
+
+## Delay
+
+**Propagation Delay**
+
+## Flip-Flop
+
+D触发器:
+
+ “D-type Flip-Flop” 
+
+<img src=".\cs61c_pics\flip-flop.png" style="zoom:80%;" />
+
+- n instances of a “Flip-Flop” 
+- Flip-flop name because the output flips and flops between and 0,1 
+- D is “data”, Q is “output” ==(Qu==)
+- Edge-triggered d-type flip-flop 
+  - This one is “rising edge-triggered”, also called “positive edge” 
+
+<img src=".\cs61c_pics\flip-flop-time.png" style="zoom:100%;" />
+
+- Setup time
+- Hold time
+- CLK-to-q delay
+
+![](.\cs61c_pics\accumulator.png)
+
+可以看出，在某些时候，output的值并不正确，但只要在采样处（上升沿）保证output正确，即可使系统稳定运行。这也是为什么CLK太快（超频）有可能会导致系统崩溃的原因（因为此时output还没来得及变为正确的值，register采集到了错误的output）。
+
+**Max CLK Frequency**:
+
+<img src=".\cs61c_pics\max-clk-frequency.png" style="zoom:80%;" />
+
+## Pipeline
+
+Pipeline to improve performance:
+
+<img src=".\cs61c_pics\pipeline.png" style="zoom:80%;" />
+
+<img src=".\cs61c_pics\pipeline-2.png" style="zoom:67%;" />
+
+## Finite State Machine
+
+数电状态图：
+
+- You have seen FSMs in other classes 
+
+- The function can be represented with a “state transition diagram” 
+- With combinational logic and registers, any FSM can be implemented in hardware.
+
+<img src=".\cs61c_pics\hardware-implement-of-fsm.png" style="zoom:80%;" />
