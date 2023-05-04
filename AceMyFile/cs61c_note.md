@@ -2964,3 +2964,77 @@ Pipeline to improve performance:
 - With combinational logic and registers, any FSM can be implemented in hardware.
 
 <img src=".\cs61c_pics\hardware-implement-of-fsm.png" style="zoom:80%;" />
+
+## 数电知识大集合
+
+**真值表**
+
+**逻辑器件图**：记住，当输入有奇数个1的时候，异或（xor）输出为1
+
+**布尔代数**
+
+<img src=".\cs61c_pics\laws_of_boolean_algebra.png" style="zoom:80%;" />
+
+**Cononical Form**: 标准与或式
+
+
+
+## MUX
+
+Use muxes to select among input 
+
+- S input bits selects 2^S^ inputs 
+- Each input can be n-bits wide, independent of S
+
+<img src=".\cs61c_pics\2input-mux.png" style="zoom:80%;" />
+
+You can cascade mux to expand its inputs:
+
+<img src=".\cs61c_pics\cascade-mux.png" style="zoom:80%;" />
+
+## ALU
+
+Most processors contain a special logic block called “Arithmetic and Logic Unit” (ALU).
+
+We’ll show you an easy one that does signed/unsigned ADD, SUB, bitwise AND (&), bitwise OR (|)
+
+<img src=".\cs61c_pics\ALU.png" style="zoom:97%;" />
+
+
+
+### Unsigned adder implementation:
+
+- 半加器(no carrier to add in input):
+
+<img src=".\cs61c_pics\one-bit-adder.png" style="zoom:80%;" />
+
+- 全加器：
+
+  <img src=".\cs61c_pics\one-bit-adder-with-carrier.png" style="zoom:80%;" />
+
+  <img src=".\cs61c_pics\one-bit-adder-with-carrier-implementation.png" style="zoom:80%;" />
+
+  对于N-bit：
+
+  <img src=".\cs61c_pics\one-N-bit-adder.png" style="zoom:80%;" />
+
+  
+
+
+
+### Signed adder implementation
+
+以2-bit为例，处理符号数时，一位为符号位，另一位为数据位：
+
+<img src=".\cs61c_pics\2-bit-adder.png" style="zoom:97%;" />
+
+发现与无符号加法**不同**的是：只有在C~1~和C~2~之间有且只有一个为1时，overflow才有效。因此，可知有符号加法运算的overflow位可以用 C~n~ xor C~n-1~来表示。
+
+### Extrmely Smart Subtracter
+
+<img src=".\cs61c_pics\Extremely-clever-Subtractor.png" style="zoom:80%;" />
+
+因为 a - b 就是 a + (-b)，所以对输入b取反（使用一个SUB输入端控制，当SUB=1时，所有 b ⊕ SUB = b' ，然后再把SUB输入进最低位的C~0~ (进位位)，模拟对补码取反（翻转所有bit然后加1）的过程得到-b。
+
+上图即为ALU的加减法模块全图。
+
