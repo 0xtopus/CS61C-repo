@@ -2981,7 +2981,7 @@ Pipeline to improve performance:
 
 ## MUX
 
-Use muxes to select among input 
+Use muxes(multiplexers) to select among input 
 
 - S input bits selects 2^S^ inputs 
 - Each input can be n-bits wide, independent of S
@@ -3038,3 +3038,120 @@ We’ll show you an easy one that does signed/unsigned ADD, SUB, bitwise AND (&)
 
 上图即为ALU的加减法模块全图。
 
+
+
+## The CPU
+
+**Processor (CPU)**: the active part of the computer that does all the work (data manipulation and decision-making)
+
+**Datapath**: portion of the processor that contains hardware necessary to perform operations required by the processor (the brawn)
+
+**Control**: portion of the processor (also in hardware) that tells the datapath what needs to be done (the brain)
+
+## Building a RISC-V Processor
+
+**One-Instruction-Per-Cycle RISC-V Machine**
+
+- On every tick of the clock, the computer executes one instruction. 
+- Current state outputs drive the inputs to the combinational logic, whose outputs settles at the values of the state before the next clock edge.
+- At the rising clock edge, all the state elements are updated with the combinational logic outputs, and execution moves to the next clock cycle.
+
+### Datapath
+
+break up the process of “executing an instruction” into stages, and then connect the stages to create the whole datapath: 
+
+- smaller stages are easier to design 
+  - easy to optimize (change) one stage without touching the others (modularity)
+
+#### Five Stages
+
+Stage 1: Instruction Fetch (IF) 
+
+Stage 2: Instruction Decode (ID) 
+
+Stage 3: Execute (EX) - ALU (Arithmetic-Logic Unit) 
+
+Stage 4: Memory Access (MEM) 
+
+Stage 5: Write Back to Register (WB)
+
+**Basic Phases of Instruction Execution:**
+
+<img src=".\cs61c_pics\basic-phase-of-instr-exec.png" style="zoom:70%;" />
+
+#### Datapath Elements
+
+- Combinational elements
+
+  <img src=".\cs61c_pics\combination-elements.png" style="zoom:70%;" />
+
+- Register
+
+<img src="F:\awsl\cs61c\AceMyFile\cs61c_pics\register.png" style="zoom:67%;" />
+
+- Register File
+
+  <img src="F:\awsl\cs61c\AceMyFile\cs61c_pics\register-file.png" style="zoom:67%;" />
+
+  Register file (regfile, RF) consists of 32 registers: 
+
+  - Two 32-bit output busses: busA and busB 
+  - One 32-bit input bus: busW 
+
+  Register is selected by: 
+
+  - RA (number) selects the register to put on busA (data) 
+  - RB (number) selects the register to put on busB (data) 
+  - RW (number) selects the register to be written via busW (data) **when Write Enable is 1**. 
+
+  Clock input (Clk) 
+
+  - Clk input is a factor **ONLY during write operation** 
+  - During read operation, behaves as a combinational logic block:  RA or RB valid ⇒ busA or busB valid after “access time.”(acess time就是物理上的延迟时间啦)
+
+- Memory
+
+  <img src=".\cs61c_pics\memory.png" style="zoom:67%;" />
+
+  - Clock input (CLK) 
+    - CLK input is a factor **ONLY during write operation** 
+    - During read operation, behaves as a combinational logic block: Address valid ⇒ Data Out valid after “ access time”
+
+#### State Required by RV32I ISA
+
+Each instruction during execution reads and updates the state of : (1) Registers
+
+(2) Program counter
+
+(3) Memory
+
+- DMEM
+- IMEM
+
+#### R-Type ADD Datapath
+
+<img src=".\cs61c_pics\datapath-for-add.png" style="zoom:80%;" />
+
+下面的 Control Logic是作为Control来控制WriteEnable端口的。
+
+#### SUB Datapath
+
+<img src=".\cs61c_pics\add-sub-datapath.png" style="zoom:67%;" />
+
+**You can implemente all R-Type Instruction by decoding funct3 and funct7 fields and selecting appropriate ALU function!!!**
+
+
+
+#### Implementing I-Format Instruction
+
+- **addi**
+
+<img src=".\cs61c_pics\addi-datapath.png" style="zoom:70%;" />
+
+<img src=".\cs61c_pics\I-format.png" style="zoom:67%;" />
+
+- Imm. Gen:
+
+<img src=".\cs61c_pics\imm-gen.png" style="zoom:70%;" />
+
+Works for all other I-format arithmetic instructions (slti,sltiu,andi, ori,xori,slli,srli, srai) just by changing ALUSel.
