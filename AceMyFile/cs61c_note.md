@@ -3155,3 +3155,100 @@ Each instruction during execution reads and updates the state of : (1) Registers
 <img src=".\cs61c_pics\imm-gen.png" style="zoom:70%;" />
 
 Works for all other I-format arithmetic instructions (slti,sltiu,andi, ori,xori,slli,srli, srai) just by changing ALUSel.
+
+#### 完整的datapath
+
+<img src=".\cs61c_pics\complete-RV32-datapath.png" style="zoom:80%;" />
+
+#### lw指令(I-Format)
+
+<img src=".\cs61c_pics\lw-i-format.png" style="zoom:80%;" />
+
+步骤：
+
+1. 取指令(Fetch)
+2. 解码指令(Decode)，设置控制模块：ImmSel = I，Bsel = 1，ALUSel = Add，MemRW = Read，WBSet=0
+3. 执行阶段(Execution)，把RS1的地址送到ALU里与偏移量Imm相加得到读出数据的内存地址
+4. 内存操作步骤：把读出的值写入RD的地址里。
+5. 更新PC寄存器。
+
+#### JALR指令(I-Format)
+
+<img src=".\cs61c_pics\i-format-jalr.png" style="zoom:80%;" />
+
+```assembly
+jalr rd, rs, imm
+```
+
+1. 取指令(Fetch)
+
+2. 解码指令(Decode)，设置控制模块：PCSel = 1，RegWEn = 1，ImmSel = I，Bsel = 1，ASel = 0，ALUSel = Add，WBSel = 2
+
+3. 执行阶段(Execution)，把PC+4的值放入rd，把PC的地址送到rs1里，然后在ALU里与偏移量Imm相加得到要跳转的指令地址存到PC寄存器里，
+
+4. 更新PC寄存器。
+
+   
+
+#### S-Format Instruction
+
+ S指令：
+
+<img src=".\cs61c_pics\Save-format.png" style="zoom:67%;" />
+
+流程：
+
+1. 取指令(Fetch)
+2. 解码指令(Decode)，设置控制模块：ImmSel = S，Bsel = 1，ALUSel = Add，MemRW = Write
+3. 执行阶段(Execution)，把RS1的地址送到ALU里与偏移量Imm相加得到写入的内存地址，把RS2里的数据送入DEME模块
+4. 内存操作步骤：把RS2的值写入得到的地址里。
+5. 更新PC寄存器。
+
+因为I-Format和S-Format的机器码存储立即数的方式不太一样，所以：
+
+<img src=".\cs61c_pics\I+S-Immediate-Generation.png" style="zoom:80%;" />
+
+
+
+#### B-Format Instruction
+
+<img src=".\cs61c_pics\b-format.png" style="zoom:80%;" />
+
+1. 取指令(Fetch)
+2. 解码指令(Decode)，设置控制模块：ImmSel = B，Bsel = 1，ASel = 1，ALUSel = Add，以及Branch Comp。
+3. 执行阶段(Execution)，比较RS1和RS2的大小，然后把PC当前地址和Imm相加；
+4. 根据Branch Comparator的比较结果设置PCSel，更新PC寄存器。
+
+#### J-Format Instruction
+
+<img src=".\cs61c_pics\j-format.png" style="zoom:80%;" />
+
+Two changes to the state 
+
+- jal saves PC+4 in register rd (the return address) 
+- Set PC = PC + offset (PC-relative jump) 
+
+Target somewhere within ±2^19^ locations, 2 bytes apart 
+
+- ±2^18^ 32-bit instructions
+
+Immediate encoding optimized similarly to branch instruction to reduce hardware cost
+
+<img src=".\cs61c_pics\j-format-datapath.png" style="zoom:80%;" />
+
+#### U-Format Instruction
+
+<img src=".\cs61c_pics\u-format.png" style="zoom:80%;" />
+
+Has 20-bit immediate in upper 20 bits of 32-bit instruction word 
+
+One destination register, rd 
+
+Used for two instructions 
+
+- lui – Load Upper Immediate 
+- auipc – Add Upper Immediate to PC
+
+<img src=".\cs61c_pics\lui-datapath.png" style="zoom:80%;" />
+
+<img src=".\cs61c_pics\AUIPC-data-path.png" style="zoom:80%;" />
