@@ -16,7 +16,9 @@
     - sp23的lab02和sp21的lab01内容类似，内容是教你使用工具来debug之类的东西，不过看起来sp23更全面一些：https://cs61c.org/sp23/labs/lab02/#other-useful-gdb-commands-recommended
 - lab03：要用到Venus，因为版本问题建议选最新的。
 
-
+- lab04：
+- lab05：请使用最新的（sp-23）logisim
+  - 如何放置subcircuit：
 
 **Project:**
 
@@ -2942,9 +2944,55 @@ D触发器:
 
 可以看出，在某些时候，output的值并不正确，但只要在采样处（上升沿）保证output正确，即可使系统稳定运行。这也是为什么CLK太快（超频）有可能会导致系统崩溃的原因（因为此时output还没来得及变为正确的值，register采集到了错误的output）。
 
-**Max CLK Frequency**:
+
+
+### disc06:
+
+https://inst.eecs.berkeley.edu/~cs61c/su20/pdfs/discussions/disc06_sol.pdf
+
+**clk-to-q ≥ hold time**
+
+- Hold time is generally included in clk-to-q delay, so clk-to-q time will usually be greater than or equal to hold time. Logically, the fact that clk-to-q ≥ hold time makes sense since it only takes clk-to-q seconds to copy the value over, so there’s no need to have the value fed into the register for any longer.
+
+**Appropriate CLK**
+
+- Clock cycle time must be small enough that inputs to registers don’t change within the hold time and large enough to account for clk-to-q times, setup times, and combinational logic delays.
+
+
+
+**1. 波形图绘制：**
+
+验证violation：从setting time到hold time这段时间里，input应该保持不变，否则输出将不确定。
+
+<img src=".\cs61c_pics\hold_time_violation.png" style="zoom:67%;" />
+
+- 检查绿线到紫线和紫线到黄线的A是否一直保持稳定。
+
+
+
+**2. 计算最大的hold time：**
+
+max hold time = prev reg clk-to q + shortest combinational circuit gate path delay
+
+<img src=".\cs61c_pics\max_hold_time.png" style="zoom:70%;" />
+
+**3. 最小的CLK：**
+
+min clk = prev reg clk-to-q + longest CL + ending reg setup time
+
+<img src=".\cs61c_pics\min_clk.png" style="zoom:70%;" />
+
+**4. 绘制状态图（FSM）：**
+
+找到所有状态，以及它们之间的转换关系，记得设置start状态
+
+
+
+### **Max CLK Frequency**
 
 <img src=".\cs61c_pics\max-clk-frequency.png" style="zoom:80%;" />
+
+
 
 ## Pipeline
 
