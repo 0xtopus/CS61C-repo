@@ -3300,3 +3300,100 @@ Used for two instructions
 <img src=".\cs61c_pics\lui-datapath.png" style="zoom:80%;" />
 
 <img src=".\cs61c_pics\AUIPC-data-path.png" style="zoom:80%;" />
+
+## Control and Status Registers
+
+**CSRs** are separate from the register file (x0-x31) 
+
+- Used for monitoring the status and performance 
+- There can be up to 4096 CSRs 
+
+CSRs are not in the base ISA, but almost mandatory in every implementation 
+
+- ISA is modular 
+- Necessary for counters and timers, and communication with peripherals
+
+**CSR instructions**:
+
+<img src=".\cs61c_pics\csr-instructions.png" style="zoom:60%;" />
+
+**Note that all uimm in <u>csr uimm instruments are zero-extended to 32 bits</u>!**
+
+<img src=".\cs61c_pics\csr-uimm-instructions.png" style="zoom:50%;" />
+
+Basically what these instructions do is put the current csr value into rd and write rs1 value into csr.
+
+### Pseudo-instruction
+
+Use write enable and clock.
+
+`csrw csr, rs1` is `csrrw x0, csr, rs1`
+
+- rd=x0, just writes rs1 to CSR 
+
+`csrwi csr, uimm` is `csrrwi x0, csr, uimm` 
+
+- rd=x0, just writes uimm to CSR 
+
+### System Instrutions
+
+`ecall`
+
+`ebreak`
+
+`fence`
+
+<img src=".\cs61c_pics\system-instru.png" style="zoom:67%;" />
+
+### Control Timing
+
+选择最长的路径(critical path)：
+
+![](.\cs61c_pics\timing-for-add.png)
+
+**lw:**
+
+<img src=".\cs61c_pics\timing-for-lw.png" style="zoom:80%;" />
+
+**Instruction Timing**
+
+<img src=".\cs61c_pics\instruction-timing.png" style="zoom:67%;" />
+
+<img src=".\cs61c_pics\instruction-timing2.png" style="zoom:67%;" />
+
+### Control Logic Design
+
+首先我们有control logic truth table，
+
+每个指令执行时需要设置的control位如下：
+
+<img src=".\cs61c_pics\control-logic-truth-table.png" style="zoom:67%;" />
+
+我们可以根据指令的机器码来设置指令的控制位：
+
+两种方法：
+
+1. ROM --- Popular when designing control logic manually.
+2. 组合逻辑电路 --- Today, chip designers use logic synthesis tools to convert truth tables to networks of gates.
+
+<img src=".\cs61c_pics\instru-bits-to-set-ctrl-bits.png" style="zoom:100%;" />
+
+每个control位都对应着指令机器码里的一些位。
+
+- 如果基于ROM进行控制位设置：
+
+<img src=".\cs61c_pics\Rom-based-control.png" style="zoom:67%;" />
+
+<img src=".\cs61c_pics\Rom-based-control-implementation.png" style="zoom:67%;" />
+
+- 基于组合逻辑电路：
+
+大概的方法就是对于特定的控制位设置电路，找出所需指令与其他指令在机器码上不同的位，逻辑与上和指令类型相应的opcode即可：
+
+<img src=".\cs61c_pics\control-logic-to-decode-add.png" style="zoom:67%;" />
+
+
+
+### Anecdote
+
+控制位的Flag起源于以前的邮箱，当有信要寄的时候，就在把信件放进邮箱后升起一面旗子告诉邮差；当邮差取走信件的之后，就把旗子降下来，告诉主人信已寄出。
