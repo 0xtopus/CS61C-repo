@@ -1467,7 +1467,7 @@ Using dynamic allocation can avoid program crash if it goes fail.
 
 ## Heap
 
-Dynamic variable storage, data  lives until deallocated by programmer.
+Dynamic variable storage, data lives until deallocated by programmer.
 
 **Note**: it is a different concept from heap in data structure.
 
@@ -1496,6 +1496,13 @@ Local variable storage, gets bigger as subroutines are called. (Recursion makes 
 Global variables live here for entire program run.
 
 <img src=".\cs61c_pics\Stack&Heap.png" style="zoom:75%;" />
+
+C语言中的内存可以分为四个部分：
+
+- **代码段**：存放程序的指令，通常是只读的。
+- **数据段**：存放全局变量和静态变量，分为初始化和未初始化两种。
+- **堆**：存放动态分配的内存，由程序员管理。
+- **栈**：存放局部变量和函数调用的信息，由系统管理。
 
 ## Float Pointer
 
@@ -3088,7 +3095,7 @@ We’ll show you an easy one that does signed/unsigned ADD, SUB, bitwise AND (&)
 
 
 
-## The CPU
+# The CPU
 
 **Processor (CPU)**: the active part of the computer that does all the work (data manipulation and decision-making)
 
@@ -3397,3 +3404,189 @@ Use write enable and clock.
 ### Anecdote
 
 控制位的Flag起源于以前的邮箱，当有信要寄的时候，就在把信件放进邮箱后升起一面旗子告诉邮差；当邮差取走信件的之后，就把旗子降下来，告诉主人信已寄出。
+
+# Pipelining
+
+In real life, nobody uses single-cycle-CPU cauze it is ineffecient!
+
+Instead, we use pipelining!
+
+## Performance Iron Laws
+
+Processor Performance iron law: 
+
+Time per program = Instructiond per Program * Cycles per Instruction * Time per Cycle
+
+- **Instruction per Program**
+
+Determined by:
+
+- 
+  - Task
+  - Algorithm
+  - Language
+  - compiler
+  - ISA	
+
+- **CPI**
+  - ISA
+  - microarchitecture
+- **Time per Cycle**
+  - microarchitecture
+  - Technology(5nm, 7nm...)
+  - Power Budget(lower voltages reduce transistor speed)
+
+<img src=".\cs61c_pics\speed-tradeoff-example.png" style="zoom:67%;" />
+
+## Energy Efficiency
+
+In CMOS :
+
+- Leakage(30%)
+- Sparse
+
+**Energy per Task**
+
+Energe per Program = Instruction per Program * Energy per Instruction 正比于  Instruction per Program * CV^2^
+
+V是电压，C是电容。
+
+
+
+### Energy Iron Law
+
+Performance = Power * Energy Efficiency
+
+- Energy efficiency (e.g., instructions/Joule) is key metric in all computing devices.
+- For power-constrained systems (e.g., 20MW datacenter), need better energy efficiency to get more performance at same power.
+- For energy-constrained systems (e.g., 1W phone), need better energy efficiency to prolong battery life.
+
+## Pipelining
+
+- Pipelining doesn’t help latency of single task, it helps throughput of entire workload 
+
+- Multiple tasks operating simultaneously using different resources 
+- Potential speedup = Number of pipe stages
+
+- Pipeline rate limited by slowest pipeline stage 
+- Unbalanced lengths of pipe stages reduce speedup
+
+### Pipelining RISC-V Datapath
+
+<img src=".\cs61c_pics\pipelined-risc-v-datapath.png" style="zoom:67%;" />
+
+与Single-Cycle-CPU不同，Pipelined方式的单条指令运行时间由于要照顾到所有同时进行的流程里最慢的部分所以会更长一些。
+
+但得益于同时可以处理多条指令，在总体的运行速度上，Pipeline更胜一筹：
+
+<img src=".\cs61c_pics\pipeline-vs-single-cycle.png" style="zoom:67%;" />  
+
+通过牺牲单条指令的运行速度，pipeline通过提高指令的吞吐量（putthrough）取胜。
+
+由于CPU里同时有多条指令在调试执行，所以需要在datapath里加入一些寄存器来存储当前阶段所需的数据和所需的指令控制位。
+
+- Pipeline registers separate stages, hold data for each instruction in flight.
+- We make copies of the previous instructions all the way down the stream(By using registers).
+  - Each one of these pipeline registers will holds the bits that correspond to the instruction that  being   executed in that particular stage.
+  - And that stage has to also keep the control bits.
+
+
+<img src=".\cs61c_pics\pipeline-datapath.png" style="zoom:50%;" />
+
+<img src=".\cs61c_pics\pipeline-control.png" style="zoom:57%;" />
+
+
+
+### Hazards
+
+A hazard is a situation that prevents starting the next instruction in the next clock cycle 
+
+1. Structural hazard 
+   - A required resource is busy (e.g. needed in multiple stages) 
+2. Data hazard Data 
+   - dependency between instructions 
+   - Need to wait for previous instruction to complete its data read/write 
+3. Control hazard 
+   - Flow of execution depends on previous instruction
+
+#### Structural Hazard
+
+Problem: Two or more instructions in the pipeline compete for access to a single physical resource
+
+Solution 1: Instructions take it in turns to use resource, some instructions have to stall 
+
+Solution 2: Add more hardware to machine (Can always solve a structural hazard by adding more hardware)
+
+#### Data Hazard
+
+试想下面的程序：
+
+<img src=".\cs61c_pics\data-hazard.png" style="zoom:70%;" />
+
+发现当add处于WB阶段将结果写入t0时，sw正在读取t0的数据。
+
+为了避免冲突，我们利用寄存器操作的速度比其他操作快这一特性，让寄存器在一个CLK周期里执行两步操作：
+
+- 在前半段写寄存器，在后半段读寄存器
+- 这样，sw就能读取到正确的t0值了
+
+如果出现更复杂的情况，如下图所示：
+
+<img src=".\cs61c_pics\data-hazard2.png" style="zoom:67%;" />
+
+发现：Without some fix, sub and or will calculate wrong result!
+
+- Solution1：Stalling
+
+  - 当检测到下一条指令的rs是上一条指令的rd时，插入bubble（无实际意义的指令, 比如 `nops` (`addi x0, x0, 0`）等待直到上条指令的rd寄存器被正确写入之后再执行下条指令。
+  - 问题：牺牲性能
+  - <img src=".\cs61c_pics\stalling.png" style="zoom:67%;" />
+
+- Solution2: Forwarding
+
+  - 对前后指令的rd和rs进行比较，控制一个Mux进行选择，如果检测到冲突，不再直接调用register file里的寄存器，而是利用用另外的寄存器把ALU计算的结果直接送回给ALU进行下次计算。
+
+  - <img src=".\cs61c_pics\forwarding.png" style="zoom:67%;" />
+
+    
+
+  - Compare destination of older instructions in pipeline with sources of new instruction in decode stage. 
+
+  - Must ignore writes to x0!
+
+  - <img src=".\cs61c_pics\forwarding-control.png" style="zoom:67%;" />
+
+    
+
+##### Load Data Hazard
+
+如果有下面这样一段程序：
+
+<img src=".\cs61c_pics\load-data-hazard.png" style="zoom:50%;" />
+
+发现由于时光不可倒流，所以即使使用了一个寄存器来存储从memory里取出的数据来forward，lw依然需要stalling一个CLK周期来等待数据从memory里取出。
+
+- Solution1：当前一条指令是lw，且在第二条指令（比如上图里的`and`）decode后发现这条指令需要用到前面加载数据到的目的寄存器时，放弃后续的所有操作，直到下一个周期在执行一模一样的指令
+  - 缺点：损失性能
+  - <img src=".\cs61c_pics\load-data-hazard-stalling.png" style="zoom:67%;" />
+
+- Solution2：让编译器发现问题，解决问题
+  - 出现load data hazard的时候，编译器把一条无关痛痒的指令换到lw后面填充这一个周期。
+  - <img src=".\cs61c_pics\load-data-hazard-avoid-stall.png" style="zoom:67%;" />
+
+#### Control Hazard
+
+在执行分支指令时，我们发现由于不确定分支是否需要跳转，后面的两条指令无法确定是否需要执行，需要stalling。
+
+<img src=".\cs61c_pics\control-hazard.png" style="zoom:67%;" />
+
+- If branch not taken, then instructions fetched sequentially after branch are correct 
+- If branch or jump taken, then need to flush incorrect instructions from pipeline by converting to NOPs
+
+<img src=".\cs61c_pics\control-hazard2.png" style="zoom:60%;" />
+
+使用预测来提高performance：直接猜测下一个PC的位置，然后等到分支结果出来后校对是否猜错，如果猜错再flush寄存器的结果。
+
+- Every taken branch in simple pipeline costs 2 dead cycles 
+- To improve performance, use “branch prediction” to guess which way branch will go earlier in pipeline 
+- Only flush pipeline if branch prediction was incorrect
