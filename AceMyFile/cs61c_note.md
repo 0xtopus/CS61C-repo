@@ -2981,6 +2981,8 @@ https://inst.eecs.berkeley.edu/~cs61c/su20/pdfs/discussions/disc06_sol.pdf
 
 max hold time = prev reg clk-to q + shortest combinational circuit gate path delay
 
+如果hold time超过了这个时间，那么在下一次信号传递过来后reg C还会保持原状态而无法及时更新。
+
 <img src=".\cs61c_pics\max_hold_time.png" style="zoom:70%;" />
 
 **3. 最小的CLK：**
