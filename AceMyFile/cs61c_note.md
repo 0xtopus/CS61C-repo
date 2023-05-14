@@ -28,19 +28,19 @@ Project的仓库是和lab分开的，每个project都有一个独立的仓库
 
 - 新建一个目录，用git命令行工具进入这个目录内
 - 使用`git init`初始化这个文件夹
-- 设置远程仓库，以sp-23的project 2为例: 
+- 设置远程仓库的地址，你可以去各个project的页面查看对应的地址链接，这里以sp-23的project 2为例: 
 
 ```bash
 git remote add starter https://github.com/61c-teach/sp23-proj2-starter.git
 ```
 
-- 拉取仓库到本地，分支名可能是`main`或者`master`，你可以去对应的仓库里查看：
+- 拉取仓库到本地，`<分支名>`可能是`main`或者`master`，你可以去对应的仓库里查看，或者使用`git remote show starter`命令，在输出中找到类似于这样的一行：`HEAD branch: main`，这就表示远程仓库starter的分支名是main:
 
 ```bash
 git pull starter <分支名>
 ```
 
-- 在github里新建一个仓库，然后把自己的远程仓库添加进来：
+- 在自己的github里新建一个仓库，然后把自己新建的仓库添加进来：
 
 在Git终端里运行：
 
@@ -48,13 +48,13 @@ git pull starter <分支名>
 git remote add origin <自己仓库的地址>
 ```
 
-然后push：
+然后push即可完成设置：
 
 ```bash
 git push -u origin master
 ```
 
-
+注：一些Project会让你在设置好仓库后再下载完成project所要用到的工具，一般你只要运行现成的脚本（运行类似`bash test.sh download_tools`这样的命令）就可以自动完成下载，这部分内容在Project的页面都会有详细的说明，跟着做就行。
 
 **Six Great Ideas in Computer Structure**
 
@@ -3592,3 +3592,76 @@ Solution 2: Add more hardware to machine (Can always solve a structural hazard b
 - Every taken branch in simple pipeline costs 2 dead cycles 
 - To improve performance, use “branch prediction” to guess which way branch will go earlier in pipeline 
 - Only flush pipeline if branch prediction was incorrect
+
+# Cache
+
+## Binary prefix
+
+- IEC Standard
+
+| Name | Factor |
+| :--: | :----: |
+|  KB  | 2^10^  |
+|  ME  | 2^20^  |
+|  GB  | 2^30^  |
+|  TB  | 2^40^  |
+|  PB  | 2^50^  |
+|  EB  | 2^60^  |
+|  ZB  | 2^70^  |
+|  YB  | 2^80^  |
+
+- How to remember them?
+
+- **K**issing **m**e **g**ives **t**en **p**ercent **e**xtra **z**eal & **y**outh! 
+
+
+
+### Convert binary prefix quickly
+
+<img src=".\cs61c_pics\convert-binary-prefix.png" style="zoom:67%;" />
+
+## Memory Hierarchy
+
+> 存储器按速度、容量和成本的不同分为不同的层级，常见的存储器层次结构如下：
+>
+> - 寄存器 (Register)：寄存器是位于CPU 内部的最快速的存储器，用于存储CPU 指令和数据。
+> - 缓存 (Cache)：缓存是一种高速存储器，通常位于CPU 和主存之间，用于缓存最常用的指令和数据，以提高CPU 访问这些数据的速度。缓存分为L1、L2 和L3 三级，容量依次递增，但访问速度逐级递减。
+> - 主存 (RAM)：主存是一种随机访问存储器 (RAM)，用于
+> - 存储操作系统、应用程序和用户数据等内容。主存速度较快，但容量有限。
+> - 虚拟内存 (Virtual Memory)：虚拟内存是一种使用磁盘空间来扩展主存容量的机制。虚拟内存将主存中暂时不用的数据和程序存储到磁盘中，以释放主存空间供其他程序使用。
+> - 辅助存储器 (Secondary Storage)：辅助存储器是一种容量较大、速度较慢、但价格较便宜的存储器，常见的类型包括硬盘、固态硬盘、光盘和闪存盘等。它们主要用于存储操作系统、应用程序和用户数据等内容。辅助存储器与主存和虚拟内存一起构成了计算机的存储器层次结构。
+>
+> 存储器层次结构的设计旨在平衡存储器的速度、容量和成本。较快、较小的存储器用于缓存最常用的数据和指令，以提高CPU 访问速度，而较慢、较大的存储器则用于存储大量的数据和文件，以提供持久性的存储。
+
+Great Idea #3: Principle of Locality / Memory Hierarchy
+
+金字塔形结构：层级越高，速度越快，价格越贵，容量越小。
+
+## Locality
+
+- Cache contains **copies of data** in memory that are being used. 
+- Memory contains **copies of data** on disk that are being used. 
+- Caches work on the principles of **temporal and spatial locality**. 
+  - Temporal locality (locality in time): If we use it now, chances are we’ll want to use it again soon. 
+  - Spatial locality (locality in space): If we use a piece of memory, chances are we’ll use the neighboring pieces soon.
+
+> 缓存的工作原理基于数据的空间局部性和时间局部性。也就是说，缓存会尝试预测哪些数据可能在不久的将来被访问，并在缓存中存储这些数据，以便更快地访问它们。数据的空间局部性指的是在程序执行期间，对数据的访问往往集中在某些局部区域，因此缓存可以利用这种特点；而时间局部性指的是，在程序执行期间，对某些数据的访问可能会重复出现，因此缓存可以利用这种特点，将数据存储在缓存中以供快速访问。
+
+## Hierarchy Management
+
+- registers and memory 
+  - By compiler (or assembly level programmer) 
+- cache and main memory 
+  - By the cache controller hardware
+- main memory and disks (secondary storage)
+  - By the operating system (virtual memory) 
+  - Virtual to physical address mapping assisted by the hardware (‘translation lookaside buffer’ or TLB)
+  - By the programmer (files) 
+
+## Cache Design
+
+- How do we organize cache? 
+- Where does each memory address map to? 
+  - (Remember that cache is subset of memory, so multiple memory addresses map to the same cache location.) 
+- How do we know which elements are in cache? 
+- How do we quickly locate them? C
