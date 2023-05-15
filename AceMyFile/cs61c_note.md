@@ -3213,7 +3213,7 @@ Each instruction during execution reads and updates the state of : (1) Registers
 
 Works for all other I-format arithmetic instructions (slti,sltiu,andi, ori,xori,slli,srli, srai) just by changing ALUSel.
 
-#### 完整的datapath
+### 完整的datapath
 
 <img src=".\cs61c_pics\complete-RV32-datapath.png" style="zoom:80%;" />
 
@@ -3355,6 +3355,9 @@ Use write enable and clock.
 <img src=".\cs61c_pics\system-instru.png" style="zoom:67%;" />
 
 ### Control Timing
+
+- A **state element** is an element connected to the clock (denoted by a triangle at the bottom). The input signal to each state element must stabilize before each rising edge. •
+- The **critical path** is the longest delay path between state elements in the circuit. The circuit cannot be clocked faster than this, since anything faster would mean that the correct value is not guaranteed to reach the state element in the alloted time. If we place registers in the critical path, we can shorten the period by reducing the amount of logic between registers.
 
 选择最长的路径(critical path)：
 
@@ -3664,4 +3667,126 @@ Great Idea #3: Principle of Locality / Memory Hierarchy
 - Where does each memory address map to? 
   - (Remember that cache is subset of memory, so multiple memory addresses map to the same cache location.) 
 - How do we know which elements are in cache? 
-- How do we quickly locate them? C
+- How do we quickly locate them? 
+
+## Direct Mapped Caches
+
+In a direct-mapped cache, each memory address is associated with one possible block within the cache
+
+- Therefore, we only need to look in a single location in the cache for the data if it exists in the cache 
+- Block is the unit of transfer between cache and memory
+
+**Tips:** 画内存（memory）的时候，使其宽度和缓存（cache）保持一致。比如下图的cache是8位宽（注：宽度 = block size ，在这里是2 Bytes），内存也画成8位宽。
+
+<img src=".\cs61c_pics\draw-memory-width-as-cache.png" style="zoom:60%;" />
+
+### Index
+
+对于来自memory的数据，要怎么知道放在cache里的哪个block里呢（即：which row of cache should the data go？）？
+
+如上图所示，我们一般把memory按block划分，利用求余的思想，即图中颜色相同的block应该存放在对应的同一cache位置。
+
+实际上，我们只需读取memory地址里中间的一段bits（由block的size和cache的高度决定），就能准确地知道数据在cache里应该存放的位置，比如对于上面的8位block，只需读取数据的memory地址的低2、3位即可确定其在cache里的位置。（注：“Cache Index”这个词是Dan生造的)
+
+<img src=".\cs61c_pics\cache-index.png" style="zoom:77%;" />
+
+### Offset
+
+在cache里确定了数据的row(block)之后，还需要确定column，这可以通过数据的memory地址的低位来确定。在上图的例子中，如果最低位为0则是block右边的数据，如果最低位为1则是左边。
+
+<img src=".\cs61c_pics\divide-memory-addr-for-cache.png" style="zoom:67%;" />
+
+### Tag
+
+在实际中，我们还需要知道cache里存储的数据来自memory的哪个地方，因此，还需要一个tag来指示：
+
+<img src=".\cs61c_pics\cache-tag.png" style="zoom:80%;" />
+
+如果把memory按cache大小分块，以上图为例，cache为8个字节，那么发现每块memory里所有字节的地址去掉低三位后得到的数字是一样的，比如最上方初始的0~7个字节，去掉地址的低三位后得到的二进制数全是0，即可确定他们的tag是0.
+
+之后，我们就可以根据tag来知道cache里存储的某块数据来自memory的哪个部分了。
+
+### 总结：TIO
+
+<img src=".\cs61c_pics\divide-memory-addr-for-cache.png" style="zoom:67%;" />
+
+要确定一个memory里的数据所对应的cache地址，我们将它的地址拆成三份，t, i , o。首先我们可以通过index来确定它在cache的哪一行，然后通过offset知道它在cache的哪一列，最后我们给它加上tag，以便我们知道它来自memory的哪个部分。
+
+举例：下图memory地址为14的数据在cache中是什么样的？
+
+先算row：14 mod 4 = 2，所以在cache第2行（黄色，cache行号从0开始）；其次，因为14的最低位是0，所以在右列；最后，tag由 14/4 - 1 = 2算出。
+
+<img src=".\cs61c_pics\cache-tag.png" style="zoom:80%;" />
+
+All fields are read as unsigned integers. 
+
+- Index specifies the cache index (which “row”/block of the cache we should look in) 
+- Offset：once we’ve found correct block, specifies which byte within the block we want 
+- Tag：the remaining bits after offset and index are determined; these are used to distinguish between all the memory addresses that map to the same location
+
+fun fact：tio，西班牙语uncle的意思。
+
+<img src=".\cs61c_pics\tio-cache-mnemonic.png" style="zoom:67%;" />
+
+### 补充
+
+巧妙计算：
+
+11101的十进制数是多少？
+
+答：111是十进制的7，左移两位就是乘以4，即11100是28，最后再加一，得11101是十进制里的29.
+
+### Tag, Index, Offset的计算
+
+知block的宽度，可求Offset所需要的位数：比如2个字节宽的block就只需要一位，即最低位来标识出column；而16个字节宽的block就需要低四位bit来标识column（因为16 = 2^4^）。
+
+知道block宽度和cache的总大小后，我们可以计算出row（行数）：比如一个大小为8 Bytes，block size = 2 bytes的cache，由8 / 2 = 4可知这个cache的高度（行数）为4。因为2^2^ = 4，所以在memory address里index占2个bit。
+
+最后知道了Offset和Index在memory address里占的位数后，剩下的位数就是Tag的值。
+
+**补充**：为了知道cache里的某个block是否存储的是garbage还是valid value，我们还需要一位valid bit来告诉我们。
+
+> When start a new program, cache does not have valid information for this program 
+>
+> - Need an indicator whether this tag entry is valid for this program 
+> - Add a “valid bit” to the cache tag entry 
+> - 0 - cache miss, even if by chance, address = tag
+> - 1 - cache hit, if processor address = tag
+
+cache的结构大致如下图所示：
+
+<img src=".\cs61c_pics\16kb-direct-mapped-cache.png" style="zoom:67%;" />
+
+例：如上图所示，我们已知cache总大小为16kb，block宽度为16 Bytes，那么我们可以计算出Offset占4位，由16KB / 16 Byte我们知道这个cache有2^10^(1K)行，所以需要10位Index，最后剩下的位数全部是Tag。
+
+## Cache Terminology
+
+When reading memory, 3 things can happen:
+
+- **cache hit**: cache block is valid and contains proper address, so read desired word
+- **cache miss**: nothing in cache in appropriate block, so fetch from memory 
+- **cache miss, block replacement**: wrong data is in cache at appropriate block, so discard it and fetch desired data from memory (cache always copy)
+
+Some informal terminology:
+
+- **Cold**: Cache empty 
+- **Warming**: Cache filling with values you’ll hopefully be accessing again soon
+- **Warm**: Cache is doing its job, fair % of hits 
+- **Hot**: Cache is doing very well, high % of hits
+
+More terminology...
+
+- **Hit rate**: fraction of access that hit in the cache 
+- **Miss rate**: 1 – Hit rate 
+- **Miss penalty**: time to replace a block from lower level in memory hierarchy to cache 
+- **Hit time**: time to access cache memory (including tag comparison) 
+
+**Abbreviation for cache**: “$” = cache (a Berkeley innovation!)
+
+## Memory Access with Cache
+
+<img src=".\cs61c_pics\mmr-access-without-cache.png" style="zoom:67%;" />
+
+
+
+<img src=".\cs61c_pics\mmr-access-with-cache.png" style="zoom:67%;" />
