@@ -56,6 +56,12 @@ git push -u origin master
 
 注：一些Project会让你在设置好仓库后再下载完成project所要用到的工具，一般你只要运行现成的脚本（运行类似`bash test.sh download_tools`这样的命令）就可以自动完成下载，这部分内容在Project的页面都会有详细的说明，跟着做就行。
 
+**Project 3**：
+
+- Hard-wired control: for signals like ALUSel, where you might want to output a certain number depending on multiple potential input signals, a Priority Encoder might be helpful!
+
+
+
 **Six Great Ideas in Computer Structure**
 
 1. Abstraction
@@ -3736,6 +3742,10 @@ fun fact：tio，西班牙语uncle的意思。
 
 答：111是十进制的7，左移两位就是乘以4，即11100是28，最后再加一，得11101是十进制里的29.
 
+
+
+cache并非只存在于memory hierarchy中，实际上，还有web cache， recent phone call cache等等。
+
 ### Tag, Index, Offset的计算
 
 知block的宽度，可求Offset所需要的位数：比如2个字节宽的block就只需要一位，即最低位来标识出column；而16个字节宽的block就需要低四位bit来标识column（因为16 = 2^4^）。
@@ -3790,3 +3800,88 @@ More terminology...
 
 
 <img src=".\cs61c_pics\mmr-access-with-cache.png" style="zoom:67%;" />
+
+### Read Cache
+
+**IVTO**
+
+读取cache中的数据时，我们遵循“IVTO”原则：
+
+根据给出的memory address，首先检查Index确定数据在cache的哪一行；然后读取valid bit看数据是否有效；再检查tags确认数据是否匹配；如果匹配，即Hit，就根据offset找到相对应的column读出数据，如果不匹配，执行miss with replacement。
+
+<img src=".\cs61c_pics\cache-logic.png" style="zoom:77%;" />
+
+(如上图，如果你只是按字（32-bit）来读取cache，那么你可以只读offset的高两位)
+
+### Write Cache
+
+ 为了保证cache和memory的一致性，有两种写cache的方式：
+
+- Write-through
+  - 在processor运算后，每更新一次cache的值的同时，同时也更新memory对应的值
+- Write-back
+  - 在processor运算后，只更新cache的值，同时在block里添加一个标志位（dirty bit），置位这个标志位表示memory的值“stale”了，只有cache里的值才是“fresh”的。如此一来，只有当这个block被替换后才需要向memory ”write back“。注：由于一位一位地对比检查写入的新值和旧值比较浪费时间，所以只要processor返回一个新值，不管新旧值是否一致，dirty bit都会被置位。
+  - 当erase cache的时候，你需要把所有的valid bits置零，但在置零之前，请检查dirty bit：如果dirty bit为高位，你需要先把里面的数据写入对应的memory里。
+
+## Block Size Tradeoff
+
+- **Benefits of Larger Block Size** 
+  - Spatial Locality: if we access a given word, we’re likely to access other nearby words soon 
+  - Very applicable with Stored-Program Concept
+  - Works well for sequential array accesses 
+- **Drawbacks of Larger Block Size** 
+  - Larger block size means <u>larger miss penalty</u> 
+    - on a miss, takes longer time to load a new block from next level 
+  - If block size is too big relative to cache size, then there are too few blocks  
+    - Result: miss rate goes up
+
+- If you stride by cache size, you typically have the worst performance!
+- See diagrams below, considering miss penalty and miss rate and the product of them(average access time), you can find a sweet spot and that's the point we want!
+
+<img src=".\cs61c_pics\block-size-tradeoff.png" style="zoom:67%;" />
+
+## Types of Cache Misses
+
+“Three Cs” Model of Misses 
+
+- 1st C: Compulsory Misses 
+  - occur when a program is first started 
+  - cache does not contain any of that program’s data yet, so misses are bound to occur 
+  - can’t be avoided easily, so won’t focus on these in this course 
+  - Every block of memory will have one compulsory miss (NOT only every block of the cache)
+
+- 2nd C: Conflict Misses 
+  - miss that occurs because two distinct memory addresses map to the same cache location 
+  - two blocks (which happen to map to the same location) can keep overwriting each other 
+  - big problem in direct-mapped caches 
+  - how do we lessen the effect of these?
+    - Solution 1: Make the cache size bigger -- Fails at some point 
+    - Solution 2: Multiple distinct blocks can fit in the same cache Index?
+
+- 3rd C: Capacity Misses 
+  - miss that occurs because the cache has a limited size 
+  - miss that would not occur if we increase the size of the cache 
+  - sketchy definition, so just get the general idea 
+  - This is the primary type of miss for <a href="#Fully Associative caches">Fully Associative caches</a>.
+- How to catagorize these misses?
+  - Run an address trace against a set of caches: 
+    - First, consider an infinite-size, <a href="#Fully Associative caches">fully-associative cache</a>. For every miss that occurs now, consider it a compulsory miss. 
+    - Next, consider a finite-sized cache (of the size you want to examine) with full-associativity. Every miss that is not in #1 is a capacity miss. 
+    - Finally, consider a finite-size cache with finite-associativity. All of the remaining misses that are not #1 or #2 are conflict misses. (Thanks to Prof. Kubiatowicz for the algorithm)
+
+## Fully Associative caches
+
+没有index：
+
+- no “rows”: any block can go anywhere in the cache 
+- must compare with all tags in entire cache to see if data is there
+
+<img src=".\cs61c_pics\fully-associative-cache.png" style="zoom:67%;" />
+
+**Benefit of Fully Assoc Cache** :
+
+- No Conflict Misses (since data can go anywhere) 
+
+**Drawbacks of Fully Assoc Cache**: 
+
+- Need hardware comparator for every single entry: if we have a 64KB of data in cache with 4B entries, we need 16K comparators: infeasible
