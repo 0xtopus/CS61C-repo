@@ -59,8 +59,10 @@ git push -u origin master
 **Project 3**：
 
 - Hard-wired control: for signals like ALUSel, where you might want to output a certain number depending on multiple potential input signals, a Priority Encoder might be helpful!
+- 有用的图片：
 
-
+- 一定要注意tunnel的命名！注意各种大小写！
+- 23版和21版有一些区别，实现的指令有一点不太一样，此外21版推荐使用hard wired 的control logic，23版则会给你一个表格让你用ROM实现，但这个表格需要权限，所以你还是得用hard wired的control logic。在21版里对hard wired方法有更多提示，比如推荐你使用Priority Encoder等等，可以在做control logic的时候参考一下：https://inst.eecs.berkeley.edu/~cs61c/sp21/projects/proj3/#info-control-logic-1
 
 **Six Great Ideas in Computer Structure**
 
@@ -3498,7 +3500,7 @@ Performance = Power * Energy Efficiency
 
 - Pipeline registers separate stages, hold data for each instruction in flight.
 - We make copies of the previous instructions all the way down the stream(By using registers).
-  - Each one of these pipeline registers will holds the bits that correspond to the instruction that  being   executed in that particular stage.
+  - Each one of these pipeline registers will holds the bits that correspond to the instruction that  being executed in that particular stage.
   - And that stage has to also keep the control bits.
 
 
@@ -3885,3 +3887,140 @@ More terminology...
 **Drawbacks of Fully Assoc Cache**: 
 
 - Need hardware comparator for every single entry: if we have a 64KB of data in cache with 4B entries, we need 16K comparators: infeasible
+
+## N-Way Set Associative Cache
+
+这是一种介于Fully Associative Cache和Direct Mapped Cache的Cache：Tag和Offset都是一样的，但Index现在不指向一个特定的row，而是一个set，这个set可以视为一个Fully Associative Cache。
+
+<img src=".\cs61c_pics\2-way-set-associative-cache.png" style="zoom:67%;" />
+
+这样一来，既可以降低<a href="Types of Cache Misses">Conflict Misses</a>的概率，而又可以使在一个较小的set里查询tag的时间不至于到Fully Associative Cache那样长久，非常实用。
+
+注：N-Way里的N都是2的指数。
+
+- Basic Idea 
+
+  - cache is direct-mapped w/respect to sets 
+
+  - each set is fully associative with N blocks in it 
+
+- Given memory address: 
+  - Find correct set using Index value. 
+  - Compare Tag with all Tag values in that set. 
+  - If a match occurs, hit!, otherwise a miss. 
+  - Finally, use the offset field as usual to find the desired data within the block
+
+In fact, for a cache with M blocks:
+
+- it’s Direct-Mapped if it’s 1-way set assoc, 
+- It’s Fully Assoc if it’s M-way set assoc 
+- so these two are just special cases of the more general set associative design
+
+<img src=".\cs61c_pics\4-way-set-associative-cache-circuit.png" style="zoom:67%;" />
+
+上图里的Set是横着画的。
+
+## Block Replacement Policy
+
+<img src=".\cs61c_pics\block-replacement-policy.png" style="zoom:67%;" />
+
+三种按常见顺序从上到下排列的BRP。
+
+<img src=".\cs61c_pics\cache-simulator.png" style="zoom:80%;" />
+
+一个simulator，可以模拟cache。http://www.ecs.umass.edu/ece/koren/architecture/Cache/frame1.htm
+
+## AMAT
+
+average memory access time.
+
+- How to choose between associativity, block size, replacement & write policy? 
+- Design against a performance model 
+  - Minimize: $Average Memory Access Time = Hit Time + Miss Penalty * Miss Rate$  
+    - 为什么不是hit rate * hit time: 因为即使miss了，你也要在取回后hit你需要的数据，所以无论怎样都会hit一次。
+  - Influenced by technology & program behavior
+
+
+
+一个提高性能的方法是使用多级缓存：
+
+<img src=".\cs61c_pics\memory-hierarchy.png" style="zoom:99%;" />
+
+计算公式如下图所示:
+
+<img src=".\cs61c_pics\multi-level-cache.png" style="zoom:80%;" />
+
+例：
+
+Assume：
+
+- Hit Time = 1 cycle 
+- Miss rate = 5% 
+- Miss penalty = 20 cycles
+- Calculate AMAT… Avg mem access time = 1 + 0.05 x 20 = 1 + 1 cycles = 2 cycles
+
+
+
+例2：
+
+**with L2 cache**
+
+Assume 
+
+- L1 Hit Time = 1 cycle 
+- L1 Miss rate = 5% 
+- L2 Hit Time = 5 cycles 
+- L2 Miss rate = 15% (% L1 misses that miss) 
+- L2 Miss Penalty = 200 cycles
+
+L1 miss penalty = 5 + 0.15 * 200 = 35 
+
+Avg mem access time = 1 + 0.05 x 35 = 2.75 cycles
+
+**without L2 cache**：
+
+Assume 
+
+- L1 Hit Time = 1 cycle 
+- L1 Miss rate = 5% 
+- L1 Miss Penalty = 200 cycles 
+
+Avg mem access time = 1 + 0.05 x 200 = 11 cycles 
+
+**4x faster with L2 cache! (2.75 vs. 11)**
+
+### Reduce miss rate
+
+1. Larger cache 
+
+   - limited by cost and technology 
+
+   - hit time of first level cache < cycle time (bigger caches are slower) 
+
+2. More places in the cache to put each block of memory – associativity 
+
+   - fully-associative  
+     - any block any line 
+
+   - N-way set associated  
+     - N places for each block  
+     - direct map: N=1
+
+### Typical Scale
+
+L1 ：
+
+- size: tens of KB 
+- hit time: complete in one clock cycle 
+- miss rates: 1-5% 
+
+L2: 
+
+- size: hundreds of KB 
+- hit time: few clock cycles 
+- miss rates: 10-20% 
+
+L2 miss rate is fraction of L1 misses that also miss in L2.
+
+why so high? 因为L1把hit rate高的"好东西"都拿走了！
+
