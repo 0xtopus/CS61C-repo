@@ -4024,3 +4024,154 @@ L2 miss rate is fraction of L1 misses that also miss in L2.
 
 why so high? 因为L1把hit rate高的"好东西"都拿走了！
 
+# OS
+
+当需要运行多个程序时，我们在软件层面使用OS来解决这个问题。在启动计算机的时候，OS是第一个启动的。在加载BIOS和BootLoader之后，我们不会直接启动应用程序，而是加载OS。
+
+## What Does the OS do
+
+- OS is the (first) thing that runs when computer starts 
+- Finds and controls all devices in the machine in a general way 
+  - Relying on hardware specific “device drivers” 
+- Starts services (100+) 
+  - File system, 
+  - Network stack (Ethernet, WiFi, Bluetooth, …), 
+  - TTY (keyboard), 
+  -  … 
+- Loads, runs and manages programs: 
+  - Multiple programs at the same time (time-sharing) 
+  - Isolate programs from each other (isolation) 
+  - Multiplex resources between applications (e.g., devices)
+
+OS使得每个程序都能够各自**独立地运行**，并**与各种设备（Device）进行互动**。
+
+## What Does OS Need from Hardware?
+
+- Memory translation 
+  - Each running process has a mapping from "virtual" to "physical" addresses that are different for each process 
+  - When you do a load or a store, the program issues a virtual address... But the actual memory accessed is a physical address 
+- Protection and privilege 
+  - Split the processor into at least two running modes: "User" and "Supervisor" 
+  - RISC-V also has "Machine" below "Supervisor" 
+  - Lesser privilege can not change its memory mapping 
+  - But "Supervisor" can change the mapping for any given program 
+  - And supervisor has its own set of mapping of virtual->physical 
+- Traps & Interrupts 
+  - A way of going into Supervisor mode on demand
+
+## What Happens at Boot?
+
+当启动时，我们会跳转到一些提前设定好的地址，PC会被设置为一些提前指定的值，然后开始执行一些特殊的指令帮我们启动OS。
+
+<img src=".\cs61c_pics\boot.png" style="zoom:67%;" />
+
+> 计算机的启动过程涉及到多个阶段。首先，BIOS初始化并检测硬件设备，然后加载并执行引导加载程序（Bootloader）。Bootloader负责搜索操作系统的引导加载程序，加载操作系统的内核，最终将控制权交给内核，使操作系统启动。
+
+## OS Functions
+
+### Launching Applications
+
+Applications are called “processes” in most OSs 
+
+- Thread: shared memory 
+- Process: separate memory 
+- Both threads and processes run (pseudo) simultaneously
+
+Apps are started by another process (e.g., shell) calling an OS routine (using a “syscall”) 
+
+- Depends on OS; Linux uses fork to create a new process, and execve (execute file command) to load application 
+
+Loads executable file from disk (using the file system service) and puts instructions & data into memory (.text, .data sections), prepares stack and heap 
+
+Set argc and argv, jump to start of main 
+
+Shell waits for main to return (join)
+
+> 进程和线程： 你可以把进程想象成一个工厂，它有自己的场地、设备、原料和产品。工厂可以生产不同的东西，比如玩具、衣服、食品等。每个工厂都是独立的，不会和其他工厂混淆或者干扰。
+>
+> 你可以把线程想象成工厂里的工人，他们共享工厂的资源，但是各自有自己的任务和进度。工人可以同时进行不同的工作，比如有的在装配零件，有的在检查质量，有的在包装产品等。每个工人都是协作的，为了完成工厂的目标。
+>
+> 所以，进程是一个程序运行的实例，它拥有自己的内存空间和系统资源；线程是进程内部的执行单元，它共享进程的内存空间和系统资源，但是有自己的程序计数器和栈空间。
+>
+> 假设你的电脑上有一个浏览器程序，它是一个进程，它有自己的内存空间和系统资源。当你打开浏览器时，它就开始运行。
+>
+> 假设你在浏览器里打开了三个标签页，分别访问了百度、知乎和Bing。每个标签页都是一个线程，它们共享浏览器的内存空间和系统资源，但是各自有自己的任务和进度。你可以同时在不同的标签页里搜索、浏览和切换。每个标签页都是协作的，为了完成浏览器的目标。
+
+### Supervisor Mode
+
+OS为了保护自己不被程序错误所影响，会给运行的程序加上一些限制 (e.g., access to memory, devices)
+
+To help protect the OS from the application, CPUs have **a supervisor mode** (e.g., set by a status bit in a special register)
+
+如果在supervisor mode下发生了错误，那么后果往往非常严重，比如Windows的蓝屏或者对磁盘驱动（disk driver）造成不恰当的修改。
+
+> Supervisor mode（超级用户模式）是计算机处理器的一种特权模式，也称为核心模式、系统模式或特权模式。它是处理器提供的一种权限级别，用于管理操作系统和底层系统资源。
+>
+> 在计算机系统中，处理器通常提供不同的特权级别，其中最高级别就是超级用户模式。在超级用户模式下，操作系统和核心系统可以执行特权指令和访问受限资源，如底层硬件、内核内存和设备寄存器等。
+>
+> 超级用户模式的主要目的是保护系统的安全和稳定性。通过限制应用程序的访问权限和控制系统资源的使用，操作系统可以防止恶意或无意的错误对系统的损害。只有处于超级用户模式的操作系统才能执行特权指令，控制关键资源，并进行敏感操作，如内存管理、进程管理和设备驱动程序等。
+>
+> 用户程序通常运行在较低的特权级别，称为用户模式或用户态。在用户模式下，应用程序只能访问自己的内存空间和有限的系统资源，无法直接操作底层硬件或执行特权指令。这种特权级别的分离确保了系统的稳定性和安全性。
+>
+> 总结：超级用户模式（Supervisor mode）是处理器提供的特权级别之一，用于管理操作系统和核心系统资源。在超级用户模式下，操作系统可以执行特权指令和访问受限资源，确保系统的安全性和稳定性。用户程序运行在较低的特权级别（用户模式），受限于访问权限和系统资源的限制。
+
+### Syscalls
+
+如果要访问一些OS Routine，比如说：
+
+- 读取文件
+- 启动新进程
+- 请求更多内存
+- 通过网络发送数据
+- ....
+
+我们就需要执行syscall：
+
+- Set up function arguments in registers, 
+- Raise software interrupt (with special assembly instruction)
+
+OS will perform the operation and return to user mode.
+
+This way, the OS can mediate access to all resources, and devices.
+
+### Interrupts和Exceptions
+
+We need to transition into Supervisor mode when "something" happens.
+
+- **Interrupt**: Something external to the running program 
+  - Something happens from the outside world 
+- **Exception**: Something done by the running program 
+  - E.g: Accessing memory it isn't "supposed" to, executing an illegal instruction, reading a csr not supposed at that privilege 
+- **ECALL**: Trigger an exception to the higher privilege 
+  - How you communicate with the operating system: Used to implement "syscalls" 
+- **EBREAK**: Trigger an exception within the current privilege
+
+Interrupt是由当前运行的进程以外的事件触发的，比如键盘按下；Exception是由执行当前运行程序的指令时发生的某些事件引起的，比如memory error, bus error, illegal instruction, raised exception等等。前者是异步的，后者是同步的。
+
+对于Interruption：Can handle interrupt on any convenient instruction:  “Whenever it’s convenient, just don’t wait too long”
+
+对于Exception：Must handle exception precisely on instruction that causes exception: “Drop whatever you are doing and act now”
+
+**Trap** – action of servicing interrupt or exception by hardware jump to “interrupt or trap handler” code
+
+<img src=".\cs61c_pics\trap-handling.png" style="zoom:50%;" />
+
+**Precise Trap**
+
+<img src=".\cs61c_pics\precise-traps.png" style="zoom:67%;" />
+
+
+
+<img src=".\cs61c_pics\exceptions-in-a-5-stage-pipeline.png" style="zoom:67%;" />
+
+如果发现illegal opcode，比如说没有mul这个指令，我们可以在软件层面解决这个问题。
+
+### Trap Handling
+
+Exceptions are handled like pipeline hazards 
+
+1) Complete execution of instructions before exception occurred 
+2) Flush instructions currently in pipeline (i.e., convert to nops or “bubbles”) 
+3) Optionally store exception cause in status register (Indicate type of exception) 
+4) Transfer execution to trap handler 
+5) Optionally, return to original program and re-execute instruction 
