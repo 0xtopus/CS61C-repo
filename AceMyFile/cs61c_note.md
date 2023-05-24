@@ -4175,3 +4175,131 @@ Exceptions are handled like pipeline hazards
 3) Optionally store exception cause in status register (Indicate type of exception) 
 4) Transfer execution to trap handler 
 5) Optionally, return to original program and re-execute instruction 
+
+# Virtual Memory
+
+虚拟内存是一种计算机技术，它使得应用程序可以访问超过物理内存容量的数据。虚拟内存通过在硬盘上创建一个虚拟地址空间，将部分数据从内存中转移到硬盘中，从而释放出内存空间。当应用程序需要访问这些被转移到硬盘上的数据时，虚拟内存会将这些数据重新加载到内存中，以供应用程序使用。这种技术可以提高系统的内存利用率和多任务处理能力。
+
+<img src=".\cs61c_pics\memory-hierarchy-w-virtual-memory.png" style="zoom:77%;" />
+
+虚拟内存是一个比cache还古早的概念，大概出现在60年代。
+
+虚拟内存可以为程序提供一个非常大的主内存的假象。虚拟内存将程序的"页面"分为两类：驻留在主内存中的"工作集"和存储在硬盘上的其他页面。虚拟内存的"按需分页"技术使得程序可以运行比主内存（DRAM）更大的程序。此外，虚拟内存还可以隐藏不同机器配置之间的差异。
+
+虚拟内存还可以允许操作系统共享内存，并保护不同程序之间的内存不受干扰。现在虚拟内存的重要性更加体现在保护方面，而不仅仅是作为内存层次结构的另一层。每个进程都认为自己拥有全部的内存，虚拟内存会动态地将所需的页面加载到实际内存中，从而让每个进程都感觉到自己独占内存。这种隔离和保护机制可以防止不同进程之间对内存的干扰和冲突。
+
+## Address Space
+
+Address space = set of addresses for all available memory locations.
+
+有两种内存地址：
+
+1. 虚拟内存地址：Set of addresses that the user program knows about
+2. 物理内存地址：
+   - Set of addresses that map to actual physical locations in memory 
+   - Hidden from user applications
+
+Memory manager maps (‘translates’) between these two address spaces！
+
+<img src=".\cs61c_pics\virtual-vs-physical-addr.png" style="zoom:67%;" />
+
+## 存储设备类型
+
+### Memory
+
+DRAM，SRAM：掉电易失性，
+
+SRAM：CPU，需要更多的晶体管来构建每个存储单元，因此相比于DRAM，它的存储密度较低，芯片面积较大，成本较高
+
+DRAM：内存，成本较低。
+
+- 延迟
+
+Latency to access first word: ~10ns (~30-40 processor cycles) 
+
+Each successive (0.5ns – 1ns) 
+
+### Disk
+
+无掉电易失性，作为I/O外设
+
+SSD: 固态硬盘，Access: 40-100µs (~100k proc. cycles) ， $0.05-0.5/GB
+
+HDD：机械硬盘，Access: <5-10ms (10-20M proc. cycles) ， $0.01-0.1/GB
+
+HDD和SSD是常见的存储设备。HDD使用旋转的磁盘和移动的磁头，具有较大的存储容量和较低的成本。SSD使用闪存芯片，具有更快的数据访问速度、更低的能耗和更高的可靠性，但相对于HDD而言，容量可能较小且成本较高。选择HDD还是SSD取决于具体的需求，如容量、速度和成本等因素
+
+## Virtual Memory Manager
+
+所有的进程都由OS管理，而memory则由vm manager管理。
+
+VMM的职责：
+
+- Map virtual to physical addresses 
+- Protection: 
+  - Isolate memory between processes 
+  - Each process gets dedicate ”private” memory
+  - Errors in one program won’t corrupt memory of other program 
+  - Prevent user programs from messing with OS’s memory 
+- Swap memory to disk 
+  - Give illusion of larger memory by storing some content on disk 
+  - Disk is usually much larger and slower than DRAM
+
+## Paged Memory
+
+<img src=".\cs61c_pics\page.png" style="zoom:67%;" />
+
+Physical memory (DRAM) is broken into pages s
+
+- Typical page size: 4 KiB+ (on modern OSs) --- Need 12 bits to address 4KiB（这也正好是硬盘中最小的可寻址块的大小512bytes的倍数）
+
+<img src=".\cs61c_pics\paged-memory-address-translation.png" style="zoom:80%;" />
+
+当程序访问虚拟内存时，操作系统会通过页表来将虚拟地址转换为物理地址。页表中的每一项都包含了虚拟页和物理页之间的映射关系。当程序访问虚拟页时，操作系统会查找页表并获取相应的物理页的地址，从而完成内存访问。内存管理器负责管理物理内存，跟踪空闲页框并更新页表，以便程序可以正常访问内存。这样，计算机就可以实现虚拟内存的扩展和合理分配内存资源。
+
+Store page tables in memory (DRAM)
+
+- Two (slow) memory accesses per lw/sw on cache miss 
+
+- How could we minimize the performance penalty? 
+
+- Transfer blocks (not words) between DRAM and processor cache 
+  - Exploit spatial locality 
+
+- Use a cache for frequently used page table entries …
+
+### Protection
+
+<img src=".\cs61c_pics\page-protection.png" style="zoom:67%;" />
+
+
+
+<img src=".\cs61c_pics\page-protection2.png" style="zoom:67%;" />
+
+
+
+### Common point of confusion
+
+- Bytes
+- Words 
+- Blocks
+- Pages
+- 都只不过是memory的表示方法罢了。
+
+<img src=".\cs61c_pics\bytes,words,blocks,pages.png" style="zoom:67%;" />
+
+### Page Memory Access
+
+<img src=".\cs61c_pics\page-memory-aaccess.png" style="zoom:67%;" />
+
+
+
+### Page Fault
+
+<img src=".\cs61c_pics\page-fault.png" style="zoom:67%;" />
+
+- Write-Through or Write-Back?
+
+  - DRAM acts like “cache” for disk
+
+  <img src=".\cs61c_pics\page-write-policy.png" style="zoom:67%;" />
