@@ -4257,6 +4257,24 @@ Physical memory (DRAM) is broken into pages s
 
 当程序访问虚拟内存时，操作系统会通过页表来将虚拟地址转换为物理地址。页表中的每一项都包含了虚拟页和物理页之间的映射关系。当程序访问虚拟页时，操作系统会查找页表并获取相应的物理页的地址，从而完成内存访问。内存管理器负责管理物理内存，跟踪空闲页框并更新页表，以便程序可以正常访问内存。这样，计算机就可以实现虚拟内存的扩展和合理分配内存资源。
 
+> • 页面是内存分配给程序的基本单元。为了高效利用内存,大部分程序的地址空间会分割成多个固定大小的页面。
+>
+> • 页表是用来跟踪和管理这些页面的。每个页面对应页表中的一个页表项(Page Table Entry)。
+>
+> • 页表项包含该页面的物理地址和其他信息,如:
+>
+> - 该页面是否存在(present bit)
+> - 页面是否可读/可写(read/write bit)
+> - 页面是否需要复制到二级缓存(cached bit)
+>
+> • 当程序访问一个虚拟地址时,CPU利用虚拟地址的一部分作为索引,找到对应的页表项。
+>
+> • 根据页表项中的物理页框号和虚拟地址中的页面内偏移,CPU计算出完整的物理地址。
+>
+> • 所以,页表负责跟踪和管理内存中的页面,它与虚拟地址到物理地址的转换密切相关。
+>
+> 以上就是页面和页表之间的关系。页面是内存分配的基本单位,页表负责管理和跟踪这些页面,并且用来实现虚拟地址到物理地址的转换。
+
 Store page tables in memory (DRAM)
 
 - Two (slow) memory accesses per lw/sw on cache miss 
@@ -4303,3 +4321,76 @@ Store page tables in memory (DRAM)
   - DRAM acts like “cache” for disk
 
   <img src=".\cs61c_pics\page-write-policy.png" style="zoom:67%;" />
+
+
+
+### Page Table Size
+
+如果一个32位的系统的页表大小是4kb，那么一个进程的页表占4 * 2^20^ = 4 Mb，大约是一个4GB内存的0.1%。那么如果有256个进程的时候，页表的大小约为1GB，占到了内存的四分之一！
+
+我们知道页表并非总是被数据填满，有时stack和heap之间会有很大的空隙，造成空间的浪费。为了减轻内存的占用，我们使用多级页表(Hierarchical page tables, w/ decreasing page size)来解决这个问题。
+
+<img src=".\cs61c_pics\hierarchical-page-table.png" style="zoom:67%;" />
+
+> 在多级页表中,较低级的页表仅在需要访问该页表对应虚拟地址范围时才会被加载到内存中。
+>
+> 处理器在转换虚拟地址时首先使用最高级的页表,例如一级页表。一级页表中的页表项包含指向二级页表的指针。
+>
+> 当处理器需要访问二级页表对应虚拟地址范围内的地址时,它才会真正读取(加载)二级页表至内存。
+>
+> 在这之前,二级页表只存在于磁盘或交换空间中,但并未加载到物理内存中,因此不占用内存空间。
+>
+> 只有在需要访问该页表对应的虚拟地址范围时,操作系统才会将二级页表读入内存,这一过程就称为"加载(该级)页表项到内存"。
+>
+> 处理器在读取二级页表项后,才能得到最终的物理地址。
+
+> A hierarchical page table can save memory usage because it allows the operating system to only allocate memory for the page table entries that are actually being used. In a single-level page table, an entry must be allocated for every possible virtual page, even if many of those virtual pages are not being used. This can result in a large amount of memory being wasted on unused page table entries.
+>
+> In contrast, a hierarchical page table only needs to allocate memory for the top-level directory and the second-level page tables that are actually being used. If a virtual page is not being used, its corresponding second-level page table does not need to be allocated, saving memory.
+>
+> For example, consider a two-level page table with a top-level directory containing 1024 entries and each second-level page table also containing 1024 entries. If only 10% of the virtual address space is being used, then only 10% of the second-level page tables need to be allocated. This means that instead of allocating memory for 1024 * 1024 = 1,048,576 page table entries (as would be required in a single-level page table), only 1024 + (0.1 * 1024 * 1024) = 104,960 page table entries need to be allocated, saving a significant amount of memory.
+
+虚拟地址到物理地址的转换过程:
+
+1. CPU使用虚拟地址的一部分作为页表索引值。这个部分称为页表索引值。
+2. 页表包含了页表项(PTE),每个虚拟页对应一个PTE。每个PTE包含一个物理页号和一些状态或权限位。
+3. CPU利用页表索引值查找对应的PTE,并读取这个PTE。
+4. PTE保存的物理页号与虚拟地址的偏移部分结合得到完整的物理地址。
+5. PTE中的状态位表示该页是否有效、是否可写、是否可执行等。 CPU检查这些位以决定内存访问是否允许。
+6. 对于非常大的虚拟地址空间,使用多级页表。页表索引值首先索引到第一级页表,它包含指向第二级页表的指针,依此类推。
+
+### Translation Lookside Buffers
+
+<img src=".\cs61c_pics\address-protection-and-translation.png" style="zoom:67%;" />
+
+
+
+<img src=".\cs61c_pics\tlb.png" style="zoom:67%;" />
+
+TLB:
+
+Typically 32-128 entries, usually fully associative 
+
+- Each entry maps a large page, hence less spatial locality across pages  -- more likely that two entries conflict 
+- Sometimes larger TLBs (256-512 entries) are 4-8 way set-associative 
+- Larger systems sometimes have multi-level (L1 and L2) TLBs 
+
+Random or FIFO replacement policy 
+
+“TLB Reach”: Size of largest virtual address space that can be simultaneously mapped by TLB
+
+<img src=".\cs61c_pics\TLB-location.png" style="zoom:50%;" />
+
+如果tlb miss发生了，那么就去memory里的page table寻找对应VA的PA。一般而言，TLB的hit rate非常高，大于99%。
+
+
+
+<img src=".\cs61c_pics\tlb-address-translation.png" style="zoom:67%;" />
+
+## VM and Cache
+
+<img src=".\cs61c_pics\comparing-cache-and-vm.png" style="zoom:67%;" />
+
+
+
+<img src=".\cs61c_pics\impact-of-paging-on-AMAT.png" style="zoom:67%;" />
