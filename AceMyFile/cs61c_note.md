@@ -4394,3 +4394,110 @@ Random or FIFO replacement policy
 
 
 <img src=".\cs61c_pics\impact-of-paging-on-AMAT.png" style="zoom:67%;" />
+
+## I/O
+
+处理器与不同的外设互动，就要使用I/O接口。
+
+处理器和I/O之间的互动主要有两类：
+
+1. 读数据：读取一串数据；
+2. 写数据：向I/O里写入一串数据；
+
+一般来说，我们使用 **Memory mapped I/O** , 即把内存地址的低位空出来一些留给I/O设备的寄存器。操作数据时使用的指令和操作内存数据的指令是一样的：lw，sw
+
+<img src=".\cs61c_pics\memory-mapped-io.png" style="zoom:67%;" />
+
+不同I/O设备的速率是不一样的，见下图：
+
+<img src=".\cs61c_pics\processor-io-speed-mismatch.png" style="zoom:50%;" />
+
+为了解决I/O设备和处理器速率不匹配的问题，我们使用下列方法来解决这个问题：
+
+### Polling
+
+- 轮询（polling）：
+  - Device registers generally serve two functions: 
+    - Control Register, says it’s OK to read/write (I/O ready) [think of a flagman on a road] 
+    - Data Register, contains data 
+
+Processor reads from Control Register in loop 
+
+- Waiting for device to set Ready bit in Control reg (0 → 1) 
+
+- Indicates “data available” or “ready to accept data” 
+
+Processor then loads from (input) or writes to (output) data register 
+
+- I/O device resets control register bit (1 → 0) 
+
+**Procedure called “Polling”**.
+
+轮询适合每秒轮询次数较少的设备，如果某个设备轮询次数太多，那么CPU的开销会很大。
+
+### Interrupts
+
+Occurs when I/O is ready or needs attention 
+
+- Interrupt current program 
+- Transfer control to the trap handler in the operating system 
+
+Interrupts: 
+
+- No I/O activity: Nothing to do 
+- Lots of I/O: Expensive – thrashing caches, VM, saving/restoring state
+
+现代做法：
+
+**Low data rate** (e.g. mouse, keyboard) ：Use interrupts. 
+
+**High data rate** (e.g. network, disk) ： Start with interrupts... 
+
+-  If there is no data, you don't do anything! 
+- Once data starts coming... Switch to Direct Memory Access (DMA)
+
+### DMA
+
+Allows I/O devices to directly read/write main memory 
+
+New hardware: The DMA Engine 
+
+DMA engine contains registers written by CPU: 
+
+- Memory address to place data 
+
+- chunk of bytes
+
+- I/O device #, direction of transfer 
+
+- unit of transfer, amount to transfer per burst
+
+<img src=".\cs61c_pics\DMA.png" style="zoom:80%;" />
+
+接收数据的时候，CPU从设备那里收到一个interrupt，然后初始化传输：指示DMA把数据载入一个确定的地址中，然后DMA会执行数据的传输，传输完成后给CPU一个interrupt。
+
+输出数据的时候，CPU先确认外设准备完毕，然后执行传输，告诉DMA数据在某个特定的地址中且可用，然后DMA执行传输，直到传输完成后，DMA给CPU一个interrupt。
+
+#### Where is DMA
+
+一般来说，现在的DMA大多位于最后一级cache和memory之间。这样做的好处是DMA不会扰乱cache的工作，但坏处是：Need to explicitly manage coherency。
+
+### Networking
+
+SW Send steps 
+
+1: Application copies data to OS buffer 
+
+2: OS calculates checksum, starts timer 
+
+3: OS sends data to network interface HW and says start 
+
+
+
+SW Receive steps 
+
+3: OS copies data from network interface HW to OS buffer 
+
+2: OS calculates checksum, if OK, send ACK; if not, delete message (sender resends when timer expires) 
+
+1: If OK, OS copies data to user address space, & signals application to continue
