@@ -4501,3 +4501,42 @@ SW Receive steps
 2: OS calculates checksum, if OK, send ACK; if not, delete message (sender resends when timer expires) 
 
 1: If OK, OS copies data to user address space, & signals application to continue
+
+# Flynn's Taxonomy
+
+> 弗林分类法（Flynn's Taxonomy）是一种将计算机体系结构根据并发指令流（或“线程”）和数据流的数量进行分类的分类系统。它由迈克尔·J·弗林在1966年提出，并已成为计算机体系结构中的重要概念。
+>
+> - 为什么弗林分类法很重要呢？
+>
+> 弗林分类法提供了一个框架，用于理解和分类不同类型的计算机体系结构。它帮助研究人员、工程师和设计师分析和比较各种体系结构的能力和限制。通过将体系结构分类为不同的类别，它能更好地了解其性能特征、并行性和效率。
+>
+> - 弗林分类法是如何工作的呢？
+>
+> 弗林分类法将计算机体系结构分为四个类别：
+>
+> 1. 单指令流单数据流（SISD）：在这个类别中，单个指令流操作单个数据流。它代表传统的顺序计算，其中指令逐个在单个处理单元上执行，就像典型的个人计算机一样。
+> 2. 单指令流多数据流（SIMD）：在这个类别中，单个指令流控制多个数据流。SIMD体系结构同时对多个数据元素执行相同的指令。它通常用于并行处理系统，例如图形处理器（GPU），其中相同的操作应用于多个数据元素。
+> 3. 多指令流单数据流（MISD）：这个类别较少见，表示多个指令流操作单个数据流的体系结构。MISD体系结构具有有限的实际应用，主要是理论上的兴趣。
+> 4. 多指令流多数据流（MIMD）：在这个类别中，多个指令流同时操作多个数据流。MIMD体系结构能够同时在不同的数据上执行不同的指令，实现真正的并行处理。它通常用于多核处理器、集群和分布式计算系统。
+>
+> 通过将计算机体系结构分为这四个类别，弗林分类法为理解各种计算机系统的并行处理能力和组织提供了基础。
+>
+> 需要注意的是，虽然弗林分类法是一个有用的框架，但一些现代体系结构由于复杂性和混合性质而可能不完全符合单一的分类。
+
+## SIMD Architectures
+
+SIMD在单指令时处理多个数据。比如进行向量的运算。
+
+Sources of performance improvement: 
+
+- One instruction is fetched & decoded for entire operation 
+- Multiplications are known to be independent 
+- Pipelining/concurrency in memory access as well
+
+<img src=".\cs61c_pics\intels_simd.png" style="zoom:67%;" />
+
+Intel AVX SIMD Instructions 
+
+- One instruction fetch that operates on multiple operands simultaneously 
+- 512/256/128/64-bit AVX registers 
+- Use C intrinsics
