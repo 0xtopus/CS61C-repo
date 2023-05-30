@@ -433,7 +433,7 @@ check <a href="https://github.com/WilsonQ1n/VIM_C_IDE">this link</a>
 
 ### C debugger in command line
 
-#### **CGBD**
+#### **CGDB**
 
 You will find the [GDB reference card useful](https://inst.eecs.berkeley.edu/~cs61c/sp21/resources-pdfs/gdb5-refcard.pdf). GDB stands for “GNU De-Bugger.” 
 
@@ -4540,3 +4540,60 @@ Intel AVX SIMD Instructions
 - One instruction fetch that operates on multiple operands simultaneously 
 - 512/256/128/64-bit AVX registers 
 - Use C intrinsics
+
+# Thread-level Parallelism
+
+自从2005年起，"顺序应用性能"(Sequential App Performance)就遇到了瓶颈，无论我们如何增加transistor的数量也无济于事。所以，提高程序的性能的希望就转移到了多核与并行处理上。
+
+## Multiprocessor 
+
+<img src=".\cs61c_pics\multiprocessor-execution-model.png" style="zoom:80%;" />
+
+## Threads
+
+A Thread stands for “thread of execution”, is a single stream of instructions.
+
+> Thread: sequence of instructions, with own program counter and processor state (e.g., register file)
+
+- A program / process can split, or fork itself into separate threads, which can (in theory) execute simultaneously. 
+- An easy way to describe/think about parallelism 
+
+With a single core, a single CPU can execute many threads by Time Sharing
+
+More details:
+
+- Sequential flow of instructions that performs some task 
+- Each thread has: 
+  - Dedicated PC (program counter) 
+  - Separate registers 
+  - Accesses the shared memory 
+- Each physical core provides one (or more)
+  - **Hardware threads** that actively execute instructions 
+  - Each executes one “hardware thread” 
+- Operating system multiplexes multiple 
+  - **Software threads** onto the available hardware threads
+  - All threads except those mapped to hardware threads are waiting
+
+## OS Threads
+
+操作系统的线程给我们造成一种“多线程同时运行”的假象：
+
+1. 许多软件线程在硬件线程上同时运行；
+2. 把软件线程从硬件线程上移除
+3. 加载先前保存的寄存器并执行不同的软件线程
+
+## Multithreading
+
+超线程，由Intel提出的一个概念。
+
+即把单个的物理CPU核心变成多个逻辑CPU核心来使用，每个逻辑核心可以同时执行不同的指令流，从而实现了同时执行多个线程的效果。虽然超线程可以提高CPU的执行效率，但是它也会增加CPU的功耗和热量，所以在一些高性能应用场景下可能需要关闭超线程来获得更好的性能和稳定性。
+
+## Definitions
+
+**Thread**: sequence of instructions, with own program counter and processor state (e.g., register file) 
+
+**Multicore**:  
+
+- **Physical CPU**: One thread (at a time) per CPU, in software OS switches threads typically in response to I/O events like disk read/write  
+- **Logical CPU**: Fine-grain thread switching, in hardware, when thread blocks due to cache miss/memory access  
+- **Hyper-Threading** aka Simultaneous Multithreading (SMT): Exploit superscalar architecture to launch instructions from different threads at the same time!
