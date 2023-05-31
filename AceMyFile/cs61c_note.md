@@ -4545,7 +4545,7 @@ Intel AVX SIMD Instructions
 
 自从2005年起，"顺序应用性能"(Sequential App Performance)就遇到了瓶颈，无论我们如何增加transistor的数量也无济于事。所以，提高程序的性能的希望就转移到了多核与并行处理上。
 
-## Multiprocessor 
+## Multiprocessor
 
 <img src=".\cs61c_pics\multiprocessor-execution-model.png" style="zoom:80%;" />
 
@@ -4597,3 +4597,51 @@ More details:
 - **Physical CPU**: One thread (at a time) per CPU, in software OS switches threads typically in response to I/O events like disk read/write  
 - **Logical CPU**: Fine-grain thread switching, in hardware, when thread blocks due to cache miss/memory access  
 - **Hyper-Threading** aka Simultaneous Multithreading (SMT): Exploit superscalar architecture to launch instructions from different threads at the same time!
+
+## Parallel Programing Language
+
+有许多种并行编程语言被发明出来，但是由于需求众多，解决的问题各不相同，所以并不存在一种通用的解决方法。
+
+在C语言中，我们可以使用`OpenMP`这个库来帮我们把程序变成并行的：
+
+```c
+#include <omp.h>
+
+omp_set_num_threads(4);
+
+#pragma omp parallel for
+for (int i=0; i<100; i++) {
+    ...
+}
+
+...
+```
+
+<img src=".\cs61c_pics\open-mp.png" style="zoom:87%;" />
+
+## Lock
+
+如果我们的并行程序要使用同一公共资源，比如某个变量，那么不同线程获取该变量的时机不同，有可能会造成写入的值互相倾轧覆盖，而得出错误的结果。（比如进行累加时，线程1和线程2同时取了sum的值，正确的结果应该是sum + value1 + value2。但由于线程1返回了value1 + sum，而线程2不知道线程1的结果而返回了sum + value2导致最终少加了一个数字）
+
+我们可以使用lock的概念来解决这个问题：
+
+```c
+// wait for lock released
+while (lock != 0) ;
+
+// lock == 0 now (unlocked)
+
+// set lock
+lock = 1;
+
+// access shared resource ...
+// e.g. pi
+// sequential execution! (Amdahl ...)
+
+// release lock
+lock = 0; 
+```
+
+但是，如果lock处于自由时的状态被两个线程同时读取，那么另一个线程就无法得知lock实际上正将要被另一个线程所使用，还是会造成冲突。
+
+<img src=".\cs61c_pics\lock-synchronization.png" style="zoom:80%;" />
