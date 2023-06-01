@@ -4644,4 +4644,151 @@ lock = 0;
 
 但是，如果lock处于自由时的状态被两个线程同时读取，那么另一个线程就无法得知lock实际上正将要被另一个线程所使用，还是会造成冲突。
 
-<img src=".\cs61c_pics\lock-synchronization.png" style="zoom:80%;" />
+<img src=".\cs61c_pics\lock-synchronization.png" style="zoom:80%;" /> 
+
+所以，我们需要使用硬件的方法来解决这个问题：
+
+### Atomic Read/Write
+
+通过同一条指令执行读写操作，我们可以解决上述问题：
+
+- RISC-V Atomic Memory Operations (AMOs)：AMOs atomically perform an operation on an operand in memory and set the destination register to the original memory value
+
+```assembly
+# 把rs1里指向的内存地址的值放到rd中（旧值），然后把rs2+旧值的结果放到rs1指向的内存地址里（新值）
+amoadd.w rd,rs2,(rs1)
+```
+
+利用这个读取旧值和写入新值的特性，我们就可以通过`swap`指令来执行lock：
+
+```assembly
+# Assume that the lock is in memory location stored in register a0
+# The lock is “set” if it is 1; it is “free” if it is 0 (it’s initial value)
+
+li t0, 1 						# Get 1 to set lock
+Try: amoswap.w.aq t1, t0, (a0) 	# t1 gets old lock value
+								# while we set it to 1
+bnez t1, Try 					# if it was already 1, another
+								# thread has the lock,
+								# so we need to try again
+(… critical section goes here …)
+
+amoswap.w.rl x0, x0, (a0) 		# store 0 in lock to releas
+```
+
+通过上面的代码，我们能保证读取到lock=0时对lock的写1操作是同时发生的，从而避免了读写之间的延迟导致的问题。
+
+在C语言里通过OpenMP的实现：
+
+```c
+#include <omp.h>
+
+int main(void) {
+    omp_lock_t lock;
+    omp_init_lock(&;ock);
+    
+#pragma opm parallel
+    {
+        int id = omp_get_thread_num();
+        
+        // parallel section
+        // ...
+        
+        omp_set_lock(&lock);
+        
+        // start serial section
+        // ...
+        
+        // end serial section
+        omp_unset_lock(&lock);
+        
+        // parallel section
+        // ...
+        
+    }
+    omp_destroy_lock(&lock);
+}
+```
+
+或者，你也可以使用critical section：
+
+```c
+#include <omp.h>
+
+int main(void) {
+
+    // ...
+    omp_set_num_threads(4);
+#pragma opm parallel
+    {
+        int id = omp_get_thread_num();
+        
+        // parallel section
+        // ...
+        
+#pragma omp critical
+        
+        // start serial section
+        // ...
+        
+    }
+}
+```
+
+### Deadlock
+
+在使用lock的时候，也还要小心不要设置成deadlock，使程序拥塞，不能进行下去。
+
+### OpenMP Timing
+
+- Elapsed wall clock time: `double omp_get_wtime(void);` 
+  - Returns elapsed wall clock time in seconds 
+  - Time is measured per thread, no guarantee can be made that two distinct threads measure the same time 
+  - Time is measured from “some time in the past”, so **subtract results of two calls** to `omp_get_wtime` to get elapsed time
+
+## Share Memory and Cache
+
+- How do they share data?
+  - Single address space shared by all processors/cores
+
+- How do they coordinate?
+  - Processors coordinate/communicate through shared variables in memory (via loads and stores) 
+  - Use of shared data must be coordinated via synchronization primitives (locks) that allow access to data to only one processor at a time
+
+All multicore computers today are SMP(Shared Memory Multiprocessor).
+
+<img src=".\cs61c_pics\multicore-caches.png" style="zoom:90%;" />
+
+One issue need to address is **Cache Coherency**.
+
+### Cache Coherency
+
+Idea: When any processor has cache miss or writes, notify other processors via interconnection network
+
+> 在多处理器系统中，当一个处理器发起写事务时，其他缓存会监听（snoop）共享的互连网络，检查它们持有的标签（缓存行的标识），以确定是否存在冲突或需要进行更新。通过"sniffing"（窥探）互连网络，其他缓存可以获得最新的数据或保持一致性，以确保共享数据的正确性和一致性。
+
+<img src=".\cs61c_pics\snoopy-protocol.png" style="zoom:67%;" />
+
+Each cache tracks state of each block in cache:
+
+1. Shared: up-to-date data, other caches may have a copy 
+2. Modified: up-to-date data, changed (dirty), no other cache has a copy, OK to write, memory out-of-date (i.e., write back)
+3. Exclusive: up-to-date data, no other cache has a copy, OK to write, memory up-to-date.
+4. Owner: up-to-date data, other caches may have a copy (they must be in Shared state)
+
+### Cache Coherence Misses
+
+<img src=".\cs61c_pics\cache-coherency-problem.png" style="zoom:67%;" />
+
+Block ping-pongs between two caches even though processors are accessing disjoint variables -- Effect called false sharing.
+
+Remember The <a href="#Types of Cache Misses">3Cs</a>?
+
+The fourth C of Cache Misses! **Coherence Misses**
+
+- Misses caused by coherence traffic with other processor
+
+- Also known as communication misses because represents data moving between processors working together on a parallel program
+- For some parallel programs, coherence misses can dominate total misses
+
+False sharing a concern; watch block size!!!
